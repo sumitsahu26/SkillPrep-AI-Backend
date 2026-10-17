@@ -12,6 +12,14 @@ import {
     AssessmentDifficulty,
     generateAssessmentQuestions,
   } from "./aiAssessment.service";
+
+  import AssessmentQuestion from "../models/assessmentQuestion.model";
+
+import {
+  getRandomAssessmentQuestions,
+  incrementAssessmentQuestionUsage,
+  saveGeneratedAssessmentQuestions,
+} from "./assessmentQuestion.service";
   
   /* =========================================================
      TYPES
@@ -70,105 +78,260 @@ import {
   ========================================================= */
   
   export const startSkillAssessment =
-    async (
-      data: StartAssessmentInput
-    ) => {
-      const {
-        userId,
-        technology,
-        topic = "General",
-        difficulty,
-        questionCount,
-      } = data;
-  
-      if (
-        !Types.ObjectId.isValid(
-          userId
-        )
-      ) {
-        throw new Error(
-          "Invalid user ID"
-        );
-      }
-  
-      const generatedQuestions =
-        await generateAssessmentQuestions(
-          {
+  async (
+    data: StartAssessmentInput
+  ) => {
+    const {
+      userId,
+      technology,
+      topic = "General",
+      difficulty,
+      questionCount,
+    } = data;
+
+    if (
+      !Types.ObjectId.isValid(
+        userId
+      )
+    ) {
+      throw new Error(
+        "Invalid user ID"
+      );
+    }
+
+    /* =====================================================
+       STEP 1
+       GET QUESTIONS FROM DATABASE
+    ===================================================== */
+
+    let bankQuestions =
+      await getRandomAssessmentQuestions(
+        {
+          category:
             technology,
-  
-            topic,
-  
-            difficulty,
-  
+
+          topic,
+
+          difficulty,
+
+          limit:
             questionCount,
-          }
+        }
+      );
+
+      const initialDatabaseCount =
+         bankQuestions.length;
+
+    /* =====================================================
+       STEP 2
+       FIND HOW MANY ARE MISSING
+    ===================================================== */
+
+    const missingCount =
+    Math.max(
+      questionCount -
+        initialDatabaseCount,
+      0
+    );
+
+    /* =====================================================
+       STEP 3
+       GENERATE ONLY MISSING QUESTIONS
+    ===================================================== */
+
+    if (
+      missingCount >
+      0
+    ) {
+      try {
+        const generated =
+          await generateAssessmentQuestions(
+            {
+              technology,
+
+              topic,
+
+              difficulty,
+
+              questionCount:
+                missingCount,
+            }
+          );
+
+        /*
+         * Save generated questions
+         * permanently into the MCQ
+         * Question Bank.
+         */
+
+        await saveGeneratedAssessmentQuestions(
+          generated,
+          userId
         );
-  
-      if (
-        generatedQuestions.length ===
-        0
-      ) {
-        throw new Error(
-          "No assessment questions available"
+
+        /*
+         * Re-query so our final
+         * selection comes from the
+         * actual saved DB documents.
+         */
+
+        bankQuestions =
+          await getRandomAssessmentQuestions(
+            {
+              category:
+                technology,
+
+              topic,
+
+              difficulty,
+
+              limit:
+                questionCount,
+            }
+          );
+      } catch (error) {
+        /*
+         * AI failure should NOT
+         * destroy the assessment
+         * if DB questions exist.
+         */
+
+        console.error(
+          "Assessment AI generation failed:",
+          error
         );
       }
-  
-      const assessment =
-        await SkillAssessment.create(
-          {
-            userId:
-              new Types.ObjectId(
-                userId
-              ),
-  
-            technology,
-  
-            topic,
-  
-            difficulty,
-  
-            questionCount:
-              generatedQuestions.length,
-  
-            questions:
-              generatedQuestions.map(
-                (question) => ({
-                  question:
-                    question.question,
-  
-                  options:
-                    question.options,
-  
-                  correctAnswer:
-                    question.correctAnswer,
-  
-                  explanation:
-                    question.explanation,
-  
-                  topic:
-                    question.topic,
-  
-                  difficulty:
-                    question.difficulty,
-  
-                  selectedAnswer:
-                    "",
-  
-                  isCorrect:
-                    false,
-                })
-              ),
-  
-            status:
-              "in_progress",
-  
-            startedAt:
-              new Date(),
-          }
-        );
-  
-      return assessment;
-    };
+    }
+
+    /* =====================================================
+       STEP 4
+       FALLBACK
+    ===================================================== */
+
+    if (
+      bankQuestions.length ===
+      0
+    ) {
+      throw new Error(
+        "No assessment questions are currently available for this selection."
+      );
+    }
+
+    const finalQuestions =
+      bankQuestions.slice(
+        0,
+        questionCount
+      );
+
+    /* =====================================================
+       STEP 5
+       CREATE ASSESSMENT SNAPSHOT
+    ===================================================== */
+    
+
+    const assessment =
+      await SkillAssessment.create(
+        {
+          userId:
+            new Types.ObjectId(
+              userId
+            ),
+
+          technology,
+
+          topic,
+
+          difficulty,
+
+          /*
+           * Actual count may be
+           * lower if AI failed.
+           */
+
+          questionCount:
+            finalQuestions.length,
+
+          questions:
+            finalQuestions.map(
+              (question) => ({
+                questionId:
+                  question._id,
+
+                question:
+                  question.question,
+
+                options:
+                  question.options,
+
+                correctAnswer:
+                  question.correctAnswer,
+
+                explanation:
+                  question.explanation,
+
+                topic:
+                  question.topic,
+
+                difficulty:
+                  question.difficulty,
+
+                selectedAnswer:
+                  "",
+
+                isCorrect:
+                  false,
+              })
+            ),
+
+          status:
+            "in_progress",
+
+          startedAt:
+            new Date(),
+        }
+      );
+
+    /* =====================================================
+       STEP 6
+       TRACK BANK USAGE
+    ===================================================== */
+
+    await incrementAssessmentQuestionUsage(
+      finalQuestions.map(
+        (question) =>
+          new Types.ObjectId(
+            question._id
+          )
+      )
+    );
+
+    return {
+        assessment,
+      
+        requestedQuestionCount:
+          questionCount,
+      
+        actualQuestionCount:
+          finalQuestions.length,
+      
+        databaseQuestionCount:
+          Math.min(
+            initialDatabaseCount,
+            finalQuestions.length
+          ),
+      
+        generatedCount:
+          Math.max(
+            finalQuestions.length -
+              initialDatabaseCount,
+            0
+          ),
+      
+        usedFallback:
+          finalQuestions.length <
+          questionCount,
+      };
+  };
   
   /* =========================================================
      SUBMIT

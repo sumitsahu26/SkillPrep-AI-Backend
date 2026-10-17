@@ -12,6 +12,7 @@ import aiInterviewRoutes from "./routes/aiInterview.routes";
 import mockInterviewRoutes from "./routes/mockInterview.routes";
 import roadmapRoutes from "./routes/roadmap.routes";
 import skillAssessmentRoutes from "./routes/skillAssessment.routes";
+import assessmentQuestionRoutes from "./routes/assessmentQuestion.routes";
 
 const app = express();
 
@@ -37,6 +38,7 @@ app.use("/api/ai-interview", aiInterviewRoutes);
 app.use("/api/mock-interviews", mockInterviewRoutes);
 app.use("/api/roadmaps", roadmapRoutes);
 app.use("/api/skill-assessments", skillAssessmentRoutes);
+app.use("/api/assessment-bank",assessmentQuestionRoutes);
 
 app.get("/", (req, res) => {
   res.json({

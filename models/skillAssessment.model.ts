@@ -21,6 +21,8 @@ import mongoose, {
   
   export interface IAssessmentQuestion {
     _id: Types.ObjectId;
+
+    questionId?: Types.ObjectId;
   
     question: string;
   
@@ -98,6 +100,11 @@ import mongoose, {
   const assessmentQuestionSchema =
     new Schema<IAssessmentQuestion>(
       {
+        questionId: {
+            type: Schema.Types.ObjectId,
+          
+            ref: "AssessmentQuestion",
+          },
         question: {
           type: String,
           required: true,

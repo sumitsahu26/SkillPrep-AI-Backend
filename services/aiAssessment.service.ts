@@ -2,6 +2,8 @@ import OpenAI from "openai";
 
 import InterviewQuestion from "../models/interview.model";
 
+import AssessmentQuestion from "../models/assessmentQuestion.model";
+
 export type AssessmentDifficulty =
   | "Easy"
   | "Medium"
@@ -19,6 +21,10 @@ export interface GenerateAssessmentInput {
 }
 
 export interface GeneratedMCQ {
+  category: string;
+
+  topic: string;
+
   question: string;
 
   options: string[];
@@ -27,11 +33,25 @@ export interface GeneratedMCQ {
 
   explanation: string;
 
-  topic: string;
-
   difficulty:
     AssessmentDifficulty;
+
+  tags: string[];
 }
+
+const normalizeQuestion =
+  (
+    question: string
+  ) =>
+    question
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, " ")
+      .replace(/[?.!]+$/, "");
+
+/* =========================================================
+   CLIENT
+========================================================= */
 
 const getOpenAIClient =
   () => {
@@ -51,13 +71,16 @@ const getOpenAIClient =
   };
 
 /* =========================================================
-   GENERATE ASSESSMENT QUESTIONS
+   GENERATE
 ========================================================= */
 
 export const generateAssessmentQuestions =
   async (
-    input: GenerateAssessmentInput
-  ): Promise<GeneratedMCQ[]> => {
+    input:
+      GenerateAssessmentInput
+  ): Promise<
+    GeneratedMCQ[]
+  > => {
     const {
       technology,
       topic = "General",
@@ -65,8 +88,15 @@ export const generateAssessmentQuestions =
       questionCount,
     } = input;
 
+    if (
+      questionCount <= 0
+    ) {
+      return [];
+    }
+
     const model =
-      process.env.OPENAI_MODEL;
+      process.env
+        .OPENAI_MODEL;
 
     if (!model) {
       throw new Error(
@@ -74,15 +104,15 @@ export const generateAssessmentQuestions =
       );
     }
 
-    /*
-     * Use existing interview
-     * questions as context.
-     */
+    /* =====================================================
+       INTERVIEW BANK CONTEXT
+    ===================================================== */
 
-    const query: Record<
-      string,
-      unknown
-    > = {
+    const interviewQuery:
+      Record<
+        string,
+        unknown
+      > = {
       category:
         technology,
 
@@ -90,35 +120,76 @@ export const generateAssessmentQuestions =
     };
 
     if (
-      topic &&
-      topic !== "General"
+      topic !==
+      "General"
     ) {
-      query.topic =
+      interviewQuery.topic =
         topic;
     }
 
-    const existingQuestions =
+    const interviewQuestions =
       await InterviewQuestion.find(
-        query
+        interviewQuery
       )
-        .limit(50)
+        .limit(30)
         .select(
-          "question answer topic difficulty"
+          "question answer topic"
         )
         .lean();
 
-    const context =
-      existingQuestions
+    /* =====================================================
+       EXISTING MCQS
+    ===================================================== */
+
+    const assessmentQuery:
+      Record<
+        string,
+        unknown
+      > = {
+      category:
+        technology,
+
+      isActive: true,
+    };
+
+    if (
+      topic !==
+      "General"
+    ) {
+      assessmentQuery.topic =
+        topic;
+    }
+
+    const existingMCQs =
+      await AssessmentQuestion.find(
+        assessmentQuery
+      )
+        .limit(200)
+        .select(
+          "question"
+        )
+        .lean();
+
+    const interviewContext =
+      interviewQuestions
         .map(
           (
-            item,
+            question,
             index
           ) => `
-Question ${index + 1}
-Topic: ${item.topic}
-Question: ${item.question}
-Reference Answer: ${item.answer}
+Reference ${index + 1}
+Topic: ${question.topic}
+Question: ${question.question}
+Answer: ${question.answer}
 `
+        )
+        .join("\n");
+
+    const existingQuestionList =
+      existingMCQs
+        .map(
+          (question) =>
+            question.question
         )
         .join("\n");
 
@@ -131,49 +202,54 @@ Reference Answer: ${item.answer}
           model,
 
           instructions: `
-You are creating a technical skill assessment for software developers.
+You are creating technical MCQ assessment questions for software developers.
 
-Generate multiple-choice technical questions.
+Rules:
 
-Requirements:
-
-1. Every question must have exactly 4 options.
-2. Exactly one option must be correct.
-3. correctAnswer must exactly match one of the options.
-4. Questions must test real technical understanding.
-5. Avoid trick questions.
-6. Avoid duplicate questions.
-7. Avoid ambiguous answers.
-8. Use practical scenarios where appropriate.
-9. Match the requested difficulty.
-10. Keep explanations concise but educational.
-11. Do not create questions where multiple options could reasonably be correct.
-12. Do not use options such as "All of the above" or "None of the above".
-13. The question must relate to the requested technology.
-14. Use the provided question bank only as context. Do not simply copy every question.
+1. Generate exactly the requested number when possible.
+2. Every question must have exactly four options.
+3. Exactly one option must be correct.
+4. correctAnswer must exactly equal one item in options.
+5. Avoid ambiguous questions.
+6. Avoid trick questions.
+7. Do not use "All of the above".
+8. Do not use "None of the above".
+9. Match the requested technology.
+10. Match the requested difficulty.
+11. Prefer practical software-development knowledge.
+12. Use realistic code/concept scenarios when appropriate.
+13. Do not duplicate any existing MCQ supplied in the prompt.
+14. Do not generate duplicate questions within your response.
+15. The explanation should explain why the correct answer is correct.
+16. tags should contain useful technical keywords.
+17. category must match the requested technology.
+18. If the requested topic is General, choose useful topics across the technology.
 `,
 
           input: `
 Technology:
 ${technology}
 
-Topic:
+Requested Topic:
 ${topic}
 
 Difficulty:
 ${difficulty}
 
-Number of questions:
-${questionCount}
+Generate:
+${questionCount} NEW questions
 
-Existing interview question bank:
-
+Existing Interview Questions For Context:
 ${
-  context ||
-  "No existing questions available."
+  interviewContext ||
+  "No interview question context."
 }
 
-Generate ${questionCount} unique MCQ questions.
+Existing Assessment Questions You MUST NOT Duplicate:
+${
+  existingQuestionList ||
+  "No existing assessment questions."
+}
 `,
 
           text: {
@@ -182,7 +258,7 @@ Generate ${questionCount} unique MCQ questions.
                 "json_schema",
 
               name:
-                "skill_assessment_questions",
+                "assessment_mcqs",
 
               strict: true,
 
@@ -200,6 +276,16 @@ Generate ${questionCount} unique MCQ questions.
                         "object",
 
                       properties: {
+                        category: {
+                          type:
+                            "string",
+                        },
+
+                        topic: {
+                          type:
+                            "string",
+                        },
+
                         question: {
                           type:
                             "string",
@@ -231,11 +317,6 @@ Generate ${questionCount} unique MCQ questions.
                               "string",
                           },
 
-                        topic: {
-                          type:
-                            "string",
-                        },
-
                         difficulty:
                           {
                             type:
@@ -247,15 +328,27 @@ Generate ${questionCount} unique MCQ questions.
                               "Hard",
                             ],
                           },
+
+                        tags: {
+                          type:
+                            "array",
+
+                          items: {
+                            type:
+                              "string",
+                          },
+                        },
                       },
 
                       required: [
+                        "category",
+                        "topic",
                         "question",
                         "options",
                         "correctAnswer",
                         "explanation",
-                        "topic",
                         "difficulty",
+                        "tags",
                       ],
 
                       additionalProperties:
@@ -298,40 +391,86 @@ Generate ${questionCount} unique MCQ questions.
       )
     ) {
       throw new Error(
-        "Invalid assessment response"
+        "Invalid AI assessment response"
       );
     }
 
-    const validQuestions =
-      parsed.questions.filter(
-        (question) => {
-          if (
-            !question.question ||
-            !Array.isArray(
-              question.options
-            ) ||
-            question.options
-              .length !== 4
-          ) {
-            return false;
-          }
+    /* =====================================================
+       FINAL DUPLICATE PROTECTION
+    ===================================================== */
 
-          return question.options.includes(
-            question.correctAnswer
-          );
-        }
+    const existingSet =
+      new Set(
+        existingMCQs.map(
+          (question) =>
+            normalizeQuestion(
+              question.question
+            )
+        )
       );
 
-    if (
-      validQuestions.length ===
-      0
+    const currentSet =
+      new Set<string>();
+
+    const result:
+      GeneratedMCQ[] =
+      [];
+
+    for (
+      const question of parsed.questions
     ) {
-      throw new Error(
-        "AI did not generate valid questions"
+      if (
+        !question.question ||
+        !Array.isArray(
+          question.options
+        ) ||
+        question.options
+          .length !== 4 ||
+        !question.options.includes(
+          question.correctAnswer
+        )
+      ) {
+        continue;
+      }
+
+      const normalized =
+        normalizeQuestion(
+          question.question
+        );
+
+      if (
+        existingSet.has(
+          normalized
+        ) ||
+        currentSet.has(
+          normalized
+        )
+      ) {
+        continue;
+      }
+
+      currentSet.add(
+        normalized
       );
+
+      result.push({
+        ...question,
+
+        category:
+          technology,
+
+        topic:
+          topic !==
+          "General"
+            ? topic
+            : question.topic ||
+              "General",
+
+        difficulty,
+      });
     }
 
-    return validQuestions.slice(
+    return result.slice(
       0,
       questionCount
     );

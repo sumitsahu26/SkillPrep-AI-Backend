@@ -101,41 +101,56 @@ import {
             });
         }
   
-        const assessment =
-          await startSkillAssessment(
-            {
-              userId,
-  
-              technology:
-                technology.trim(),
-  
-              topic:
-                typeof topic ===
-                  "string" &&
-                topic.trim()
-                  ? topic.trim()
-                  : "General",
-  
-              difficulty,
-  
-              questionCount:
-                count,
-            }
-          );
+        const result =
+        await startSkillAssessment({
+          userId,
+      
+          technology:
+            technology.trim(),
+      
+          topic:
+            typeof topic ===
+              "string" &&
+            topic.trim()
+              ? topic.trim()
+              : "General",
+      
+          difficulty,
+      
+          questionCount:
+            count,
+        });
   
         return res
-          .status(201)
-          .json({
-            success: true,
-  
-            message:
-              "Assessment started successfully",
-  
-            assessment:
-              sanitizeAssessment(
-                assessment
-              ),
-          });
+        .status(201)
+        .json({
+          success: true,
+      
+          message:
+            result.usedFallback
+              ? `Assessment started with ${result.actualQuestionCount} available questions.`
+              : "Assessment started successfully",
+      
+          requestedQuestionCount:
+            result.requestedQuestionCount,
+      
+          actualQuestionCount:
+            result.actualQuestionCount,
+      
+          databaseQuestionCount:
+            result.databaseQuestionCount,
+      
+          generatedCount:
+            result.generatedCount,
+      
+          usedFallback:
+            result.usedFallback,
+      
+          assessment:
+            sanitizeAssessment(
+              result.assessment
+            ),
+        });
       } catch (error) {
         console.error(
           "Start assessment:",
