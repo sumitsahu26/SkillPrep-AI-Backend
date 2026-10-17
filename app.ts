@@ -9,6 +9,7 @@ import profileRoutes from "./routes/profile.routes";
 import resumeRoutes from "./routes/resume.routes";
 import interviewRoutes from "./routes/interview.routes";
 import aiInterviewRoutes from "./routes/aiInterview.routes";
+import mockInterviewRoutes from "./routes/mockInterview.routes";
 
 const app = express();
 
@@ -31,6 +32,7 @@ app.use("/api/profile", profileRoutes);
 app.use("/api/resumes", resumeRoutes);
 app.use("/api/interview", interviewRoutes);
 app.use("/api/ai-interview", aiInterviewRoutes);
+app.use("/api/mock-interviews",mockInterviewRoutes);
 
 app.get("/", (req, res) => {
   res.json({

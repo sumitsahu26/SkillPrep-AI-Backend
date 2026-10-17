@@ -10,10 +10,6 @@ import {
 
 const router = Router();
 
-router.post(
-  "/generate",
-  authMiddleware,
-  generateAIInterviewQuestions
-);
+router.post("/generate",authMiddleware,generateAIInterviewQuestions);
 
 export default router;
