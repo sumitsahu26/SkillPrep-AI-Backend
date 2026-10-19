@@ -23,11 +23,20 @@ export const getProfile = async (
       return;
     }
 
-    const profile = await getProfileService(userId);
+    const result = await getProfileService(userId);
 
     res.status(200).json({
       success: true,
-      profile: profile || null,
+      profile: result.profile
+      ? {
+          ...result.profile.toObject(),
+          userId: {
+            id: result.profile.userId,
+            name: result.user.name,
+            email: result.user.email,
+          },
+        }
+      : null,
     });
   } catch (error) {
     res.status(500).json({

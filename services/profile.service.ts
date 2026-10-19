@@ -1,4 +1,5 @@
 import Profile from "../models/profile.model";
+import User from "../models/user.model";
 
 interface ProfileData {
   phone?: string;
@@ -14,9 +15,22 @@ interface ProfileData {
 }
 
 export const getProfile = async (userId: string) => {
-  const profile = await Profile.findOne({ userId });
+  const [user, profile] = await Promise.all([
+    User.findById(userId).select("name email"),
+    Profile.findOne({ userId }),
+  ]);
 
-  return profile;
+  if (!user) {
+    throw new Error("User not found");
+  }
+
+  return {
+    user: {
+      name: user.name,
+      email: user.email,
+    },
+    profile,
+  };
 };
 
 export const updateProfile = async (

@@ -20,7 +20,6 @@ router.post("/refresh", refreshToken);
 
 router.post("/logout", logout);
 
-router.get("/profile", authMiddleware, getProfile
-);
+router.get("/profile", getProfile);
 
 export default router;
