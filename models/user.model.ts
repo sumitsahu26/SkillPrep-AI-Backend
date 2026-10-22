@@ -3,9 +3,13 @@ import mongoose, { Document, Schema } from "mongoose";
 export interface IUser extends Document {
   name: string;
   email: string;
-  password: string;
+  password?: string;
   isAdmin: boolean;
-  refreshToken?: string;
+  profileImage: string;
+  refreshToken?: string | null;
+
+  googleId?: string;
+  authProvider: "local" | "google";
 }
 
 const userSchema = new Schema<IUser>(
@@ -26,7 +30,12 @@ const userSchema = new Schema<IUser>(
 
     password: {
       type: String,
-      required: true,
+      required: false,
+    },
+
+    profileImage: {
+      type: String,
+      default: "",
     },
 
     isAdmin: {
@@ -37,6 +46,17 @@ const userSchema = new Schema<IUser>(
     refreshToken: {
       type: String,
       default: null,
+    },
+
+    googleId: {
+      type: String,
+      default: null,
+    },
+
+    authProvider: {
+      type: String,
+      enum: ["local", "google"],
+      default: "local",
     },
   },
   {

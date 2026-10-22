@@ -2,6 +2,7 @@ import "dotenv/config";
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
+import path from "path";
 
 import connectDB from "./config/db";
 import authRoutes from "./routes/auth.routes";
@@ -26,12 +27,20 @@ app.use(
   })
 );
 
-app.use(express.json());
+app.use(
+  "/uploads",
+  express.static(
+    path.join(process.cwd(), "uploads")
+  )
+);
+
 
 app.use(cookieParser());
 
 
 connectDB();
+
+app.use(express.json());
 
 app.use("/api/auth", authRoutes);
 app.use("/api/profile", profileRoutes);
@@ -46,12 +55,6 @@ app.use("/api/career-monitor", careerMonitorRoutes);
 app.use("/api/ai-mentor", aiMentorRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 
-app.get("/", (req, res) => {
-  res.json({
-    success: true,
-    message: "Backend API is running",
-  });
-});
 
 const PORT = process.env.PORT || 5000;
 

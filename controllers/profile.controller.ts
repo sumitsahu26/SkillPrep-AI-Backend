@@ -6,6 +6,8 @@ import {
   updateProfile as updateProfileService,
   addSkill as addSkillService,
   removeSkill as removeSkillService,
+  updateProfileImage as updateProfileImageService,
+  uploadResumeService
 } from "../services/profile.service";
 
 export const getProfile = async (
@@ -25,20 +27,26 @@ export const getProfile = async (
 
     const result = await getProfileService(userId);
 
+    const profileData = result.profile
+      ? result.profile.toObject()
+      : {};
+
     res.status(200).json({
       success: true,
-      profile: result.profile
-      ? {
-          ...result.profile.toObject(),
-          userId: {
-            id: result.profile.userId,
-            name: result.user.name,
-            email: result.user.email,
-          },
-        }
-      : null,
+
+      profile: {
+        ...profileData,
+
+        userId: {
+          name: result.user.name,
+          email: result.user.email,
+          profileImage: result.user.profileImage || "",
+        },
+      },
     });
   } catch (error) {
+    console.error("Get profile error:", error);
+
     res.status(500).json({
       success: false,
       message: "Failed to get profile",
@@ -162,6 +170,129 @@ export const removeSkill = async (
         error instanceof Error
           ? error.message
           : "Failed to remove skill",
+    });
+  }
+};
+
+export const updateProfileImage = async (
+  req: AuthRequest,
+  res: Response
+): Promise<void> => {
+  try {
+    const userId = req.user?.userId;
+
+    if (!userId) {
+      res.status(401).json({
+        success: false,
+        message: "Unauthorized",
+      });
+      return;
+    }
+
+    if (!req.file) {
+      res.status(400).json({
+        success: false,
+        message: "Profile image is required",
+      });
+      return;
+    }
+
+    const profileImage =
+      `${req.file.filename}`;
+
+    const user = await updateProfileImageService(
+      userId,
+      profileImage
+    );
+
+    if (!user) {
+      res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+      return;
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Profile image updated successfully",
+      profileImage: user.profileImage,
+    });
+  } catch (error) {
+    console.error(
+      "Update profile image error:",
+      error
+    );
+
+    res.status(500).json({
+      success: false,
+      message: "Failed to update profile image",
+    });
+  }
+};
+
+export const uploadResume = async (
+  req: AuthRequest,
+  res: Response
+): Promise<void> => {
+  try {
+    const userId = req.user?.userId;
+
+    if (!userId) {
+      res.status(401).json({
+        success: false,
+        message: "Unauthorized",
+      });
+      return;
+    }
+
+    if (!req.file) {
+      res.status(400).json({
+        success: false,
+        message: "Resume is required",
+      });
+      return;
+    }
+
+    const result = await uploadResumeService(
+      userId,
+      req.file.originalname,
+      req.file.buffer
+    );
+
+    res.status(200).json({
+      success: true,
+      message:
+        "Resume uploaded and profile updated successfully",
+
+      user: result.user,
+
+      profile: {
+        ...result.profile.toObject(),
+
+        userId: {
+          id: result.user._id,
+          name: result.user.name,
+          email: result.user.email,
+          profileImage:
+            result.user.profileImage,
+        },
+      },
+
+      extractedData: result.extractedData,
+    });
+  } catch (error) {
+    console.error(
+      "Upload resume error:",
+      error
+    );
+
+    res.status(400).json({
+      success: false,
+      message:
+        error instanceof Error
+          ? error.message
+          : "Failed to upload resume",
     });
   }
 };

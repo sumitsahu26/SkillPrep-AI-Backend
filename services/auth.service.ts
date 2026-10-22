@@ -1,6 +1,7 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import User from "../models/user.model";
+import { OAuth2Client } from "google-auth-library";
 
 interface RegisterData {
   name: string;
@@ -87,10 +88,19 @@ export const loginUser = async (
 ) => {
   const { email, password } = data;
 
-  const user = await User.findOne({ email });
+  const user = await User.findOne({
+    email: email.toLowerCase().trim(),
+  });
 
   if (!user) {
     throw new Error("Invalid email or password");
+  }
+
+  // Google-only account doesn't have a password
+  if (!user.password) {
+    throw new Error(
+      "This account uses Google login. Please continue with Google."
+    );
   }
 
   const isPasswordMatch = await bcrypt.compare(
@@ -124,10 +134,140 @@ export const loginUser = async (
   return {
     accessToken,
     refreshToken,
+
     user: {
       id: user._id,
       name: user.name,
       email: user.email,
+      profileImage: user.profileImage,
+      isAdmin: user.isAdmin,
+    },
+  };
+};
+
+const googleClient = new OAuth2Client(
+  process.env.GOOGLE_CLIENT_ID
+);
+
+/* =========================================================
+   GOOGLE LOGIN
+========================================================= */
+
+export const googleLoginUser = async (
+  credential: string
+) => {
+  if (!process.env.GOOGLE_CLIENT_ID) {
+    throw new Error("GOOGLE_CLIENT_ID is not configured");
+  }
+
+  // Verify Google ID token
+  const ticket = await googleClient.verifyIdToken({
+    idToken: credential,
+    audience: process.env.GOOGLE_CLIENT_ID,
+  });
+
+  const payload = ticket.getPayload();
+
+  if (!payload) {
+    throw new Error("Invalid Google token");
+  }
+
+  const {
+    sub: googleId,
+    email,
+    name,
+    picture,
+    email_verified,
+  } = payload;
+
+  if (!email) {
+    throw new Error("Google account email not found");
+  }
+
+  if (!email_verified) {
+    throw new Error("Google email is not verified");
+  }
+
+  const normalizedEmail = email.toLowerCase().trim();
+
+  /* =======================================================
+     FIND EXISTING USER
+  ======================================================= */
+
+  let user = await User.findOne({
+    email: normalizedEmail,
+  });
+
+  /* =======================================================
+     CREATE GOOGLE USER
+  ======================================================= */
+
+  if (!user) {
+    user = await User.create({
+      name: name || normalizedEmail.split("@")[0],
+      email: normalizedEmail,
+      password: undefined,
+      googleId,
+      profileImage: picture || "",
+      isAdmin: false,
+      authProvider: "google",
+    });
+  } else {
+    /* =====================================================
+       LINK GOOGLE TO EXISTING ACCOUNT
+    ===================================================== */
+
+    if (!user.googleId) {
+      user.googleId = googleId;
+    }
+
+    if (!user.profileImage && picture) {
+      user.profileImage = picture;
+    }
+
+    user.authProvider = "google";
+
+    await user.save();
+  }
+
+  /* =======================================================
+     GENERATE APPLICATION JWT
+  ======================================================= */
+
+  const accessToken = generateAccessToken(
+    user._id.toString(),
+    user.isAdmin
+  );
+
+  const refreshToken = generateRefreshToken(
+    user._id.toString()
+  );
+
+  /* =======================================================
+     HASH REFRESH TOKEN
+  ======================================================= */
+
+  const hashedRefreshToken = await bcrypt.hash(
+    refreshToken,
+    10
+  );
+
+  user.refreshToken = hashedRefreshToken;
+
+  await user.save();
+
+  /* =======================================================
+     RETURN SAME RESPONSE STRUCTURE AS NORMAL LOGIN
+  ======================================================= */
+
+  return {
+    accessToken,
+    refreshToken,
+    user: {
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      profileImage: user.profileImage,
       isAdmin: user.isAdmin,
     },
   };

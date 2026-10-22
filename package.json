@@ -18,16 +18,22 @@
     "cors": "^2.8.6",
     "dotenv": "^18.0.7",
     "express": "^5.3.0",
+    "google-auth-library": "^11.3.1",
     "jsonwebtoken": "^9.0.3",
+    "mammoth": "^1.13.0",
     "mongoose": "^9.11.1",
-    "openai": "^7.33.0"
+    "multer": "^2.4.0",
+    "openai": "^7.33.0",
+    "pdf-parse": "^1.1.1"
   },
   "devDependencies": {
     "@types/cookie-parser": "^1.4.10",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
     "@types/jsonwebtoken": "^9.0.10",
+    "@types/multer": "^2.3.0",
     "@types/node": "^26.6.5",
+    "@types/pdf-parse": "^1.1.5",
     "ts-node-dev": "^2.0.0",
     "typescript": "^5.9.3"
   }
