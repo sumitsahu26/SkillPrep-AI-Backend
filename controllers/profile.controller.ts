@@ -27,6 +27,8 @@ export const getProfile = async (
 
     const result = await getProfileService(userId);
 
+    const profileUrl = `${req.protocol}://${req.get("host")}/uploads/profile/`
+
     const profileData = result.profile
       ? result.profile.toObject()
       : {};
@@ -40,7 +42,7 @@ export const getProfile = async (
         userId: {
           name: result.user.name,
           email: result.user.email,
-          profileImage: result.user.profileImage || "",
+          profileImage: `${profileUrl + result.user.profileImage}` || "",
         },
       },
     });

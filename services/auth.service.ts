@@ -2,6 +2,8 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import User from "../models/user.model";
 import { OAuth2Client } from "google-auth-library";
+import fs from "fs";
+import path from "path";
 
 interface RegisterData {
   name: string;
@@ -149,9 +151,8 @@ const googleClient = new OAuth2Client(
   process.env.GOOGLE_CLIENT_ID
 );
 
-/* =========================================================
-   GOOGLE LOGIN
-========================================================= */
+  //  GOOGLE LOGIN
+
 
 export const googleLoginUser = async (
   credential: string
@@ -160,7 +161,8 @@ export const googleLoginUser = async (
     throw new Error("GOOGLE_CLIENT_ID is not configured");
   }
 
-  // Verify Google ID token
+  // VERIFY GOOGLE ID TOKEN
+
   const ticket = await googleClient.verifyIdToken({
     idToken: credential,
     audience: process.env.GOOGLE_CLIENT_ID,
@@ -188,41 +190,84 @@ export const googleLoginUser = async (
     throw new Error("Google email is not verified");
   }
 
-  const normalizedEmail = email.toLowerCase().trim();
+  const normalizedEmail =
+    email.toLowerCase().trim();
 
-  /* =======================================================
-     FIND EXISTING USER
-  ======================================================= */
+  // FIND EXISTING USER
 
   let user = await User.findOne({
     email: normalizedEmail,
   });
 
-  /* =======================================================
-     CREATE GOOGLE USER
-  ======================================================= */
+  // CREATE GOOGLE USER
 
   if (!user) {
     user = await User.create({
-      name: name || normalizedEmail.split("@")[0],
+      name:
+        name ||
+        normalizedEmail.split("@")[0],
+
       email: normalizedEmail,
+
       password: undefined,
+
       googleId,
-      profileImage: picture || "",
+
+      profileImage: "",
+
       isAdmin: false,
+
       authProvider: "google",
     });
+
+    // =====================================================
+    // DOWNLOAD GOOGLE PROFILE IMAGE
+    // =====================================================
+
+    if (picture) {
+      try {
+        const fileName =
+          await downloadGoogleProfileImage(
+            picture
+          );
+
+        user.profileImage = fileName;
+
+        await user.save();
+      } catch (error) {
+        console.error(
+          "Failed to download Google profile image:",
+          error
+        );
+      }
+    }
   } else {
-    /* =====================================================
-       LINK GOOGLE TO EXISTING ACCOUNT
-    ===================================================== */
+    // =====================================================
+    // LINK GOOGLE TO EXISTING ACCOUNT
+    // =====================================================
 
     if (!user.googleId) {
       user.googleId = googleId;
     }
 
+    // =====================================================
+    // DOWNLOAD IMAGE ONLY IF PROFILE IMAGE IS EMPTY
+    // =====================================================
+
     if (!user.profileImage && picture) {
-      user.profileImage = picture;
+      try {
+        const fileName =
+          await downloadGoogleProfileImage(
+            picture
+          );
+
+        user.profileImage = fileName;
+      } catch (error) {
+        console.error(
+          "Failed to download Google profile image:",
+          error
+        );
+      }
     }
 
     user.authProvider = "google";
@@ -230,9 +275,7 @@ export const googleLoginUser = async (
     await user.save();
   }
 
-  /* =======================================================
-     GENERATE APPLICATION JWT
-  ======================================================= */
+  // GENERATE APPLICATION JWT
 
   const accessToken = generateAccessToken(
     user._id.toString(),
@@ -243,22 +286,19 @@ export const googleLoginUser = async (
     user._id.toString()
   );
 
-  /* =======================================================
-     HASH REFRESH TOKEN
-  ======================================================= */
+  // HASH REFRESH TOKEN
 
-  const hashedRefreshToken = await bcrypt.hash(
-    refreshToken,
-    10
-  );
+  const hashedRefreshToken =
+    await bcrypt.hash(
+      refreshToken,
+      10
+    );
 
   user.refreshToken = hashedRefreshToken;
 
   await user.save();
 
-  /* =======================================================
-     RETURN SAME RESPONSE STRUCTURE AS NORMAL LOGIN
-  ======================================================= */
+  // RETURN SAME RESPONSE STRUCTURE AS NORMAL LOGIN
 
   return {
     accessToken,
@@ -271,6 +311,53 @@ export const googleLoginUser = async (
       isAdmin: user.isAdmin,
     },
   };
+};
+
+const downloadGoogleProfileImage = async (
+  imageUrl: string
+): Promise<string> => {
+  const uploadPath = path.join(
+    process.cwd(),
+    "uploads",
+    "profile"
+  );
+
+  // Make sure uploads/profile exists
+  if (!fs.existsSync(uploadPath)) {
+    fs.mkdirSync(uploadPath, {
+      recursive: true,
+    });
+  }
+
+  const fileName =
+    Date.now() +
+    "-" +
+    Math.round(Math.random() * 1e9) +
+    ".jpg";
+
+  const filePath = path.join(
+    uploadPath,
+    fileName
+  );
+
+  const response = await fetch(imageUrl);
+
+  if (!response.ok) {
+    throw new Error(
+      `Failed to download Google profile image: ${response.status}`
+    );
+  }
+
+  const buffer = Buffer.from(
+    await response.arrayBuffer()
+  );
+
+  await fs.promises.writeFile(
+    filePath,
+    buffer
+  );
+
+  return fileName;
 };
 
 export const refreshAccessToken = async (
