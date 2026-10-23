@@ -7,9 +7,10 @@ export interface IUser extends Document {
   isAdmin: boolean;
   profileImage: string;
   refreshToken?: string | null;
-
   googleId?: string;
   authProvider: "local" | "google";
+  isDeleted: boolean;
+  deletedAt: Date;
 }
 
 const userSchema = new Schema<IUser>(
@@ -57,6 +58,16 @@ const userSchema = new Schema<IUser>(
       type: String,
       enum: ["local", "google"],
       default: "local",
+    },
+
+    isDeleted: {
+      type: Boolean,
+      default: false,
+    },
+    
+    deletedAt: {
+      type: Date,
+      default: null,
     },
   },
   {

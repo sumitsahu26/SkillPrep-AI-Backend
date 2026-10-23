@@ -6,7 +6,8 @@ import {
   addSkill,
   removeSkill,
   updateProfileImage,
-  uploadResume
+  uploadResume,
+  updateUser
 } from "../controllers/profile.controller";
 
 import { authMiddleware } from "../middleware/auth.middleware";
@@ -20,6 +21,8 @@ router.use(authMiddleware);
 router.get("/", getProfile);
 
 router.put("/", updateProfile);
+
+router.put("/user", updateUser);
 
 router.post("/skills", addSkill);
 

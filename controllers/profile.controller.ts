@@ -1,13 +1,15 @@
 import { Response } from "express";
 import { AuthRequest } from "../middleware/auth.middleware";
 
+
 import {
   getProfile as getProfileService,
   updateProfile as updateProfileService,
   addSkill as addSkillService,
   removeSkill as removeSkillService,
   updateProfileImage as updateProfileImageService,
-  uploadResumeService
+  uploadResumeService,
+  updateUser as updateUserService
 } from "../services/profile.service";
 
 export const getProfile = async (
@@ -85,6 +87,42 @@ export const updateProfile = async (
     res.status(500).json({
       success: false,
       message: "Failed to update profile",
+    });
+  }
+};
+
+export const updateUser = async (
+  req: AuthRequest,
+  res: Response
+): Promise<void> => {
+  try {
+    const userId = req.user?.userId;
+
+    if (!userId) {
+      res.status(401).json({
+        success: false,
+        message: "Unauthorized",
+      });
+      return;
+    }
+
+    const user = await updateUserService(
+      userId,
+      req.body
+    );
+
+    res.status(200).json({
+      success: true,
+      message: "User name updated successfully",
+      user,
+    });
+  } catch (error) {
+    res.status(400).json({
+      success: false,
+      message:
+        error instanceof Error
+          ? error.message
+          : "Failed to update user",
     });
   }
 };

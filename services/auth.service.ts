@@ -98,6 +98,10 @@ export const loginUser = async (
     throw new Error("Invalid email or password");
   }
 
+  if (user.isDeleted) {
+    throw new Error("This account has been deleted.");
+  }
+
   // Google-only account doesn't have a password
   if (!user.password) {
     throw new Error(
@@ -113,6 +117,7 @@ export const loginUser = async (
   if (!isPasswordMatch) {
     throw new Error("Invalid email or password");
   }
+
 
   const accessToken = generateAccessToken(
     user._id.toString(),
@@ -151,7 +156,7 @@ const googleClient = new OAuth2Client(
   process.env.GOOGLE_CLIENT_ID
 );
 
-  //  GOOGLE LOGIN
+//  GOOGLE LOGIN
 
 
 export const googleLoginUser = async (
@@ -198,6 +203,12 @@ export const googleLoginUser = async (
   let user = await User.findOne({
     email: normalizedEmail,
   });
+
+  if (user?.isDeleted) {
+    throw new Error(
+      "This account has been deleted."
+    );
+  }
 
   // CREATE GOOGLE USER
 

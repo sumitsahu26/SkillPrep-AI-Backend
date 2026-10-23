@@ -4,6 +4,7 @@ import fs from "fs/promises";
 import path from "path";
 import pdfParse from "pdf-parse";
 import mammoth from "mammoth";
+import bcrypt from "bcryptjs";
 
 import OpenAI from "openai";
 
@@ -22,6 +23,14 @@ interface ProfileData {
   github?: string;
   linkedin?: string;
   portfolio?: string;
+}
+
+interface UserData {
+  name?: string;
+  email?: string;
+  currentPassword?: string;
+  newPassword?: string;
+  isDeleted?: boolean;
 }
 
 export interface ExtractedResumeData {
@@ -81,6 +90,91 @@ export const updateProfile = async (
   );
 
   return profile;
+};
+
+export const updateUser = async (
+  userId: string,
+  data: UserData
+) => {
+  const user = await User.findById(userId).select("+password");
+
+  if (!user) {
+    throw new Error("User not found");
+  }
+
+  //Soft delete user account
+  if (data.isDeleted === true) {
+    user.isDeleted = true;
+    user.deletedAt = new Date();
+
+    // Invalidate existing refresh token
+    user.refreshToken = undefined;
+
+    await user.save();
+
+    return {
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      isDeleted: user.isDeleted,
+      deletedAt: user.deletedAt,
+    };
+  }
+
+  // Update name
+  if (data.name !== undefined) {
+    const name = data.name.trim();
+
+    if (!name) {
+      throw new Error("Name is required");
+    }
+
+    user.name = name;
+  }
+
+  // Update password
+  if (data.currentPassword || data.newPassword) {
+    if (!data.currentPassword || !data.newPassword) {
+      throw new Error(
+        "Current password and new password are required"
+      );
+    }
+
+    if (!user.password) {
+      throw new Error(
+        "Password change is not available for this account"
+      );
+    }
+
+    const isCurrentPasswordValid = await bcrypt.compare(
+      data.currentPassword,
+      user.password
+    );
+
+    if (!isCurrentPasswordValid) {
+      throw new Error("Current password is incorrect");
+    }
+
+    const isSamePassword = await bcrypt.compare(
+      data.newPassword,
+      user.password
+    );
+
+    if (isSamePassword) {
+      throw new Error(
+        "New password must be different from current password"
+      );
+    }
+
+    user.password = await bcrypt.hash(
+      data.newPassword,
+      10
+    );
+  }
+
+  await user.save();
+
+  return user;
 };
 
 export const addSkill = async (

@@ -5,7 +5,7 @@ import {
   getUserProfile,
   refreshAccessToken,
   logoutUser,
-  googleLoginUser
+  googleLoginUser,
 } from "../services/auth.service";
 import { AuthRequest } from "../middleware/auth.middleware";
 
@@ -104,6 +104,15 @@ export const login = async (
     // Invalid credentials
     if (message === "Invalid email or password") {
       res.status(401).json({
+        success: false,
+        message,
+      });
+      return;
+    }
+
+    // Deleted account
+    if (message === "This account has been deleted.") {
+      res.status(403).json({
         success: false,
         message,
       });
@@ -225,71 +234,70 @@ export const getProfile = async (
 };
 
 export const refreshToken = async (
-    req: Request,
-    res: Response
-  ): Promise<void> => {
-    try {
-      const refreshToken = req.cookies.refreshToken;
-  
-      if (!refreshToken) {
-        res.status(401).json({
-          success: false,
-          message: "Refresh token is required",
-        });
-        return;
-      }
-  
-      const accessToken =
-        await refreshAccessToken(refreshToken);
-  
-      res.status(200).json({
-        success: true,
-        accessToken,
-      });
-    } catch (error) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : "Invalid refresh token";
-  
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const refreshToken = req.cookies.refreshToken;
+
+    if (!refreshToken) {
       res.status(401).json({
         success: false,
-        message,
+        message: "Refresh token is required",
       });
+      return;
     }
-  };
-  
-  
-  export const logout = async (
-    req: Request,
-    res: Response
-  ): Promise<void> => {
-    try {
-      const refreshToken = req.cookies.refreshToken;
-  
-      if (refreshToken) {
-        await logoutUser(refreshToken);
-      }
-  
-      res.clearCookie("refreshToken", {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite:
-          process.env.NODE_ENV === "production"
-            ? "none"
-            : "lax",
-      });
-  
-      res.status(200).json({
-        success: true,
-        message: "Logout successful",
-      });
-    } catch (error) {
-      console.error("Logout error:", error);
-  
-      res.status(500).json({
-        success: false,
-        message: "Internal server error",
-      });
+
+    const accessToken =
+      await refreshAccessToken(refreshToken);
+
+    res.status(200).json({
+      success: true,
+      accessToken,
+    });
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Invalid refresh token";
+
+    res.status(401).json({
+      success: false,
+      message,
+    });
+  }
+};
+
+export const logout = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const refreshToken = req.cookies.refreshToken;
+
+    if (refreshToken) {
+      await logoutUser(refreshToken);
     }
-  };
+
+    res.clearCookie("refreshToken", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite:
+        process.env.NODE_ENV === "production"
+          ? "none"
+          : "lax",
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "Logout successful",
+    });
+  } catch (error) {
+    console.error("Logout error:", error);
+
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+};
