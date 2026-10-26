@@ -11,6 +11,7 @@ import {
   uploadResumeService,
   updateUser as updateUserService
 } from "../services/profile.service";
+import { createNotification } from "../services/notification.service";
 
 export const getProfile = async (
   req: AuthRequest,
@@ -78,6 +79,17 @@ export const updateProfile = async (
       req.body
     );
 
+    if(profile) {
+      await createNotification({
+        userId,
+        title: "Profile updates",
+        description:
+          "Your SkillPrep AI profile was updated successfully.",
+        type: "system",
+        link: "/profile",
+      });
+    }
+
     res.status(200).json({
       success: true,
       message: "Profile updated successfully",
@@ -110,7 +122,7 @@ export const updateUser = async (
       userId,
       req.body
     );
-
+    
     res.status(200).json({
       success: true,
       message: "User name updated successfully",
@@ -178,11 +190,11 @@ export const removeSkill = async (
     const skill = req.params.skill;
 
     if (!skill || Array.isArray(skill)) {
-    res.status(400).json({
+      res.status(400).json({
         success: false,
         message: "Valid skill is required",
-    });
-    return;
+      });
+      return;
     }
 
     if (!userId) {

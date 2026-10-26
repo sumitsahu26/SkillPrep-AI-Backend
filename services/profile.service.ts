@@ -7,6 +7,7 @@ import mammoth from "mammoth";
 import bcrypt from "bcryptjs";
 
 import OpenAI from "openai";
+import { createNotification } from "./notification.service";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -130,6 +131,15 @@ export const updateUser = async (
     }
 
     user.name = name;
+
+    await createNotification({
+      userId,
+      title: "User name changed",
+      description:
+        "Your SkillPrep AI account name was changed successfully.",
+      type: "system",
+      link: "/setting?section=account",
+    });
   }
 
   // Update password
@@ -170,6 +180,14 @@ export const updateUser = async (
       data.newPassword,
       10
     );
+    await createNotification({
+      userId,
+      title: "Password changed",
+      description:
+        "Your SkillPrep AI password was changed successfully.",
+      type: "system",
+      link: "/setting?section=security",
+    });
   }
 
   await user.save();

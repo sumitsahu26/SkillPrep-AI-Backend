@@ -4,6 +4,7 @@ import User from "../models/user.model";
 import { OAuth2Client } from "google-auth-library";
 import fs from "fs";
 import path from "path";
+import { createNotification } from "./notification.service";
 
 interface RegisterData {
   name: string;
@@ -76,6 +77,17 @@ export const registerUser = async (
     email,
     password: hashedPassword,
   });
+
+  if(user) {
+    await createNotification({
+      userId: user._id.toString(),
+      title: "Welcome to SkillPrep AI",
+      description:
+        "Start building your resume and preparing for your next interview.",
+      type: "system",
+      link: "/dashboard",
+    });
+  }
 
   return {
     id: user._id,

@@ -14,10 +14,9 @@ import {
     startSkillAssessment,
     submitSkillAssessment,
   } from "../services/skillAssessment.service";
+import { createNotification } from "../services/notification.service";
   
-  /* =========================================================
-     START
-  ========================================================= */
+    //  START
   
   export const startAssessment =
     async (
@@ -170,9 +169,7 @@ import {
       }
     };
   
-  /* =========================================================
-     SUBMIT
-  ========================================================= */
+    //  SUBMIT
   
   export const submitAssessment =
     async (
@@ -224,6 +221,18 @@ import {
             userId,
             answers
           );
+
+          if(assessment) {
+            await createNotification({
+              userId,
+              title: "Assessment completed",
+              description:
+                "Your skill assessment results are ready.",
+              type: "skill_assessment",
+              link: "/skill-assessment",
+              preferenceKey: "skillAssessmentResults",
+            });
+          }
   
         return res.json({
           success: true,
@@ -247,9 +256,7 @@ import {
       }
     };
   
-  /* =========================================================
-     GET ALL
-  ========================================================= */
+    //  GET ALL
   
   export const getAssessments =
     async (
@@ -300,9 +307,7 @@ import {
       }
     };
   
-  /* =========================================================
-     GET ONE
-  ========================================================= */
+    //  GET ONE
   
   export const getAssessment =
     async (
@@ -359,9 +364,7 @@ import {
       }
     };
   
-  /* =========================================================
-     DELETE
-  ========================================================= */
+    //  DELETE
   
   export const removeAssessment =
     async (

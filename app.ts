@@ -17,6 +17,7 @@ import assessmentQuestionRoutes from "./routes/assessmentQuestion.routes";
 import careerMonitorRoutes from "./routes/careerMonitor.routes";
 import aiMentorRoutes from "./routes/aiMentor.routes";
 import dashboardRoutes from "./routes/dashboard.routes";
+import notificationRoutes from "./routes/notification.routes";
 
 const app = express();
 
@@ -54,9 +55,10 @@ app.use("/api/assessment-bank", assessmentQuestionRoutes);
 app.use("/api/career-monitor", careerMonitorRoutes);
 app.use("/api/ai-mentor", aiMentorRoutes);
 app.use("/api/dashboard", dashboardRoutes);
+app.use("/api/notifications", notificationRoutes);
 
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5002;
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);

@@ -1,6 +1,7 @@
 import { Types } from "mongoose";
 
 import Roadmap from "../models/roadmap.model";
+import { createNotification } from "./notification.service";
 
 import {
   generateAIRoadmap,
@@ -122,6 +123,17 @@ export const createRoadmap =
 
         source: "ai",
       });
+
+      if(roadmap) {
+        await createNotification({
+          userId,
+          title: "Your Roadmap has been created successfully.",
+          description:
+            "Your mock interview has been completed. Check your results and feedback.",
+          type: "interview",
+          link: "/roadmap",
+        });
+      }
 
     return roadmap;
   };

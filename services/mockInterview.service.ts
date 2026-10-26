@@ -5,6 +5,7 @@ import MockInterview, {
     MockQuestionSource,
 } from "../models/mockInterview.model";
 import InterviewQuestion from "../models/interview.model";
+import { createNotification } from "./notification.service";
 
 
 import {
@@ -13,11 +14,9 @@ import {
 
 import {
     evaluateInterviewAnswer,
-  } from "./aiMockEvaluation.service";
+} from "./aiMockEvaluation.service";
 
-/* =========================================================
-   TYPES
-========================================================= */
+// TYPES
 
 export type MockInterviewDifficulty =
     | "Easy"
@@ -40,9 +39,7 @@ export interface StartMockInterviewInput {
 
 }
 
-/* =========================================================
-   QUESTION QUERY
-========================================================= */
+// QUESTION QUERY
 
 const buildQuestionQuery = (
     technology: string,
@@ -75,9 +72,7 @@ const buildQuestionQuery = (
     return query;
 };
 
-/* =========================================================
-   GET RANDOM QUESTIONS
-========================================================= */
+// GET RANDOM QUESTIONS
 
 const getRandomQuestions =
     async (
@@ -106,9 +101,7 @@ const getRandomQuestions =
         ]);
     };
 
-/* =========================================================
-   START MOCK INTERVIEW
-========================================================= */
+// START MOCK INTERVIEW
 
 export const startMockInterview =
     async (
@@ -133,10 +126,8 @@ export const startMockInterview =
             );
         }
 
-        /* =====================================================
-           STEP 1
-           GET EXISTING DATABASE QUESTIONS
-        ===================================================== */
+        //    STEP 1
+        //    GET EXISTING DATABASE QUESTIONS
 
         let questions =
             await getRandomQuestions(
@@ -146,10 +137,8 @@ export const startMockInterview =
                 questionCount
             );
 
-        /* =====================================================
-           STEP 2
-           CHECK HOW MANY ARE MISSING
-        ===================================================== */
+        //    STEP 2
+        //    CHECK HOW MANY ARE MISSING
 
         const missingCount =
             Math.max(
@@ -158,10 +147,8 @@ export const startMockInterview =
                 0
             );
 
-        /* =====================================================
-           STEP 3
-           GENERATE ONLY MISSING QUESTIONS
-        ===================================================== */
+        //    STEP 3
+        //    GENERATE ONLY MISSING QUESTIONS
 
         if (missingCount > 0) {
             try {
@@ -220,10 +207,8 @@ export const startMockInterview =
             }
         }
 
-        /* =====================================================
-           STEP 4
-           CHECK FINAL QUESTION COUNT
-        ===================================================== */
+        //    STEP 4
+        //    CHECK FINAL QUESTION COUNT
 
         if (
             questions.length === 0
@@ -255,10 +240,8 @@ export const startMockInterview =
                 finalQuestionCount
             );
 
-        /* =====================================================
-           STEP 5
-           CONVERT TO MOCK QUESTIONS
-        ===================================================== */
+        //    STEP 5
+        //    CONVERT TO MOCK QUESTIONS
 
         const interviewQuestions: Omit<
             IMockInterviewQuestion,
@@ -308,10 +291,8 @@ export const startMockInterview =
             }
         );
 
-        /* =====================================================
-           STEP 6
-           CREATE INTERVIEW
-        ===================================================== */
+        //    STEP 6
+        //    CREATE INTERVIEW
 
         const interview =
             await MockInterview.create({
@@ -366,6 +347,17 @@ export const startMockInterview =
                     new Date(),
             });
 
+        if (interview) {
+            await createNotification({
+                userId,
+                title: "Mock interview completed",
+                description:
+                    "Your mock interview has been completed. Check your results and feedback.",
+                type: "interview",
+                link: "/mock-interview",
+            });
+        }
+
         return {
             interview,
 
@@ -381,9 +373,7 @@ export const startMockInterview =
         };
     };
 
-/* =========================================================
-   GET USER MOCK INTERVIEWS
-========================================================= */
+// GET USER MOCK INTERVIEWS
 
 export const getUserMockInterviews =
     async (
@@ -410,9 +400,7 @@ export const getUserMockInterviews =
             );
     };
 
-/* =========================================================
-   GET INTERVIEW BY ID
-========================================================= */
+// GET INTERVIEW BY ID
 
 export const getMockInterviewById =
     async (
@@ -456,297 +444,279 @@ export const getMockInterviewById =
         return interview;
     };
 
-/* =========================================================
-   SUBMIT + AI EVALUATE ANSWER
-========================================================= */
+// SUBMIT + AI EVALUATE ANSWER
 
 export const submitMockInterviewAnswer =
-  async (
-    interviewId: string,
-    userId: string,
-    questionId: string,
-    userAnswer: string
-  ) => {
-    /* =====================================================
-       VALIDATION
-    ===================================================== */
+    async (
+        interviewId: string,
+        userId: string,
+        questionId: string,
+        userAnswer: string
+    ) => {
 
-    if (
-      !Types.ObjectId.isValid(
-        interviewId
-      )
-    ) {
-      throw new Error(
-        "Invalid interview ID"
-      );
-    }
+        //    VALIDATION
 
-    if (
-      !Types.ObjectId.isValid(
-        userId
-      )
-    ) {
-      throw new Error(
-        "Invalid user ID"
-      );
-    }
 
-    if (
-      !Types.ObjectId.isValid(
-        questionId
-      )
-    ) {
-      throw new Error(
-        "Invalid question ID"
-      );
-    }
+        if (
+            !Types.ObjectId.isValid(
+                interviewId
+            )
+        ) {
+            throw new Error(
+                "Invalid interview ID"
+            );
+        }
 
-    if (!userAnswer.trim()) {
-      throw new Error(
-        "Answer is required"
-      );
-    }
+        if (
+            !Types.ObjectId.isValid(
+                userId
+            )
+        ) {
+            throw new Error(
+                "Invalid user ID"
+            );
+        }
 
-    /* =====================================================
-       FIND INTERVIEW
-    ===================================================== */
+        if (
+            !Types.ObjectId.isValid(
+                questionId
+            )
+        ) {
+            throw new Error(
+                "Invalid question ID"
+            );
+        }
 
-    const interview =
-      await MockInterview.findOne({
-        _id:
-          interviewId,
+        if (!userAnswer.trim()) {
+            throw new Error(
+                "Answer is required"
+            );
+        }
 
-        userId,
-      });
+        //    FIND INTERVIEW
 
-    if (!interview) {
-      throw new Error(
-        "Mock interview not found"
-      );
-    }
+        const interview =
+            await MockInterview.findOne({
+                _id:
+                    interviewId,
 
-    if (
-      interview.status !==
-      "in_progress"
-    ) {
-      throw new Error(
-        "This interview is no longer active"
-      );
-    }
+                userId,
+            });
 
-    /* =====================================================
-       FIND QUESTION
-    ===================================================== */
+        if (!interview) {
+            throw new Error(
+                "Mock interview not found"
+            );
+        }
 
-    const question =
-      interview.questions.find(
-        (item) =>
-          item._id.toString() ===
-          questionId
-      );
+        if (
+            interview.status !==
+            "in_progress"
+        ) {
+            throw new Error(
+                "This interview is no longer active"
+            );
+        }
 
-    if (!question) {
-      throw new Error(
-        "Question not found in this interview"
-      );
-    }
+        //    FIND QUESTION
 
-    /* =====================================================
-       SAVE USER ANSWER FIRST
-    ===================================================== */
+        const question =
+            interview.questions.find(
+                (item) =>
+                    item._id.toString() ===
+                    questionId
+            );
 
-    question.userAnswer =
-      userAnswer.trim();
+        if (!question) {
+            throw new Error(
+                "Question not found in this interview"
+            );
+        }
 
-    question.answeredAt =
-      new Date();
+        //    SAVE USER ANSWER FIRST
 
-    /*
-     * Save before AI call.
-     *
-     * Important:
-     * If OpenAI is unavailable,
-     * the user's answer is still safe.
-     */
+        question.userAnswer =
+            userAnswer.trim();
 
-    await interview.save();
+        question.answeredAt =
+            new Date();
 
-    /* =====================================================
-       AI EVALUATION
-    ===================================================== */
+        /*
+         * Save before AI call.
+         *
+         * Important:
+         * If OpenAI is unavailable,
+         * the user's answer is still safe.
+         */
 
-    let evaluationSuccessful =
-      false;
+        await interview.save();
 
-    try {
-      const evaluation =
-        await evaluateInterviewAnswer(
-          {
-            technology:
-              interview.technology,
+        //    AI EVALUATION
 
-            topic:
-              question.topic ||
-              interview.topic,
+        let evaluationSuccessful =
+            false;
 
-            difficulty:
-              question.difficulty,
+        try {
+            const evaluation =
+                await evaluateInterviewAnswer(
+                    {
+                        technology:
+                            interview.technology,
 
-            experience:
-              interview.experience,
+                        topic:
+                            question.topic ||
+                            interview.topic,
 
-            question:
-              question.question,
+                        difficulty:
+                            question.difficulty,
 
-            expectedAnswer:
-              question.expectedAnswer,
+                        experience:
+                            interview.experience,
 
-            userAnswer:
-              question.userAnswer,
-          }
-        );
+                        question:
+                            question.question,
 
-      /* ===================================================
-         SAVE AI RESULT
-      =================================================== */
+                        expectedAnswer:
+                            question.expectedAnswer,
 
-      question.score =
-        evaluation.score;
+                        userAnswer:
+                            question.userAnswer,
+                    }
+                );
 
-      question.feedback =
-        evaluation.feedback;
+            //    SAVE AI RESULT
 
-      question.strengths =
-        evaluation.strengths;
+            question.score =
+                evaluation.score;
 
-      question.improvements =
-        evaluation.improvements;
+            question.feedback =
+                evaluation.feedback;
 
-      question.betterAnswer =
-        evaluation.betterAnswer;
+            question.strengths =
+                evaluation.strengths;
 
-      evaluationSuccessful =
-        true;
-    } catch (error) {
-      /*
-       * Do NOT block interview when
-       * OpenAI quota/API fails.
-       */
+            question.improvements =
+                evaluation.improvements;
 
-      console.error(
-        "AI answer evaluation failed:",
-        error
-      );
+            question.betterAnswer =
+                evaluation.betterAnswer;
 
-      question.feedback =
-        "AI evaluation is currently unavailable. Your answer has been saved.";
+            evaluationSuccessful =
+                true;
+        } catch (error) {
+            /*
+             * Do NOT block interview when
+             * OpenAI quota/API fails.
+             */
 
-      question.score = 0;
+            console.error(
+                "AI answer evaluation failed:",
+                error
+            );
 
-      question.strengths =
-        [];
+            question.feedback =
+                "AI evaluation is currently unavailable. Your answer has been saved.";
 
-      question.improvements =
-        [];
+            question.score = 0;
 
-      question.betterAnswer =
-        "";
-    }
+            question.strengths =
+                [];
 
-    /* =====================================================
-       MOVE CURRENT QUESTION
-    ===================================================== */
+            question.improvements =
+                [];
 
-    const questionIndex =
-      interview.questions.findIndex(
-        (item) =>
-          item._id.toString() ===
-          questionId
-      );
+            question.betterAnswer =
+                "";
+        }
 
-    if (
-      questionIndex >=
-      interview.currentQuestionIndex
-    ) {
-      interview.currentQuestionIndex =
-        Math.min(
-          questionIndex + 1,
-          interview.questions.length
-        );
-    }
+        //    MOVE CURRENT QUESTION
 
-    /* =====================================================
-       UPDATE CURRENT TOTAL SCORE
-    ===================================================== */
+        const questionIndex =
+            interview.questions.findIndex(
+                (item) =>
+                    item._id.toString() ===
+                    questionId
+            );
 
-    const evaluatedQuestions =
-      interview.questions.filter(
-        (item) =>
-          item.userAnswer
-            ?.trim()
-      );
+        if (
+            questionIndex >=
+            interview.currentQuestionIndex
+        ) {
+            interview.currentQuestionIndex =
+                Math.min(
+                    questionIndex + 1,
+                    interview.questions.length
+                );
+        }
 
-    const totalScore =
-      evaluatedQuestions.reduce(
-        (
-          total,
-          item
-        ) =>
-          total +
-          (item.score || 0),
-        0
-      );
+        //    UPDATE CURRENT TOTAL SCORE
 
-    interview.totalScore =
-      totalScore;
+        const evaluatedQuestions =
+            interview.questions.filter(
+                (item) =>
+                    item.userAnswer
+                        ?.trim()
+            );
 
-    /*
-     * Calculate percentage only from
-     * currently answered questions.
-     */
+        const totalScore =
+            evaluatedQuestions.reduce(
+                (
+                    total,
+                    item
+                ) =>
+                    total +
+                    (item.score || 0),
+                0
+            );
 
-    const maxCurrentScore =
-      evaluatedQuestions.length *
-      10;
+        interview.totalScore =
+            totalScore;
 
-    interview.percentage =
-      maxCurrentScore > 0
-        ? Math.round(
-            (totalScore /
-              maxCurrentScore) *
-              100
-          )
-        : 0;
+        /*
+         * Calculate percentage only from
+         * currently answered questions.
+         */
 
-    await interview.save();
+        const maxCurrentScore =
+            evaluatedQuestions.length *
+            10;
 
-    return {
-      interview,
+        interview.percentage =
+            maxCurrentScore > 0
+                ? Math.round(
+                    (totalScore /
+                        maxCurrentScore) *
+                    100
+                )
+                : 0;
 
-      evaluationSuccessful,
+        await interview.save();
 
-      evaluation: {
-        score:
-          question.score,
+        return {
+            interview,
 
-        feedback:
-          question.feedback,
+            evaluationSuccessful,
 
-        strengths:
-          question.strengths,
+            evaluation: {
+                score:
+                    question.score,
 
-        improvements:
-          question.improvements,
+                feedback:
+                    question.feedback,
 
-        betterAnswer:
-          question.betterAnswer,
-      },
+                strengths:
+                    question.strengths,
+
+                improvements:
+                    question.improvements,
+
+                betterAnswer:
+                    question.betterAnswer,
+            },
+        };
     };
-  };
 
-/* =========================================================
-   COMPLETE MOCK INTERVIEW
-========================================================= */
+// COMPLETE MOCK INTERVIEW
 
 export const completeMockInterview =
     async (
@@ -850,9 +820,7 @@ export const completeMockInterview =
         return interview;
     };
 
-/* =========================================================
-   ABANDON INTERVIEW
-========================================================= */
+// ABANDON INTERVIEW
 
 export const abandonMockInterview =
     async (
@@ -900,9 +868,7 @@ export const abandonMockInterview =
         return interview;
     };
 
-/* =========================================================
-   DELETE INTERVIEW
-========================================================= */
+// DELETE INTERVIEW
 
 export const deleteMockInterview =
     async (

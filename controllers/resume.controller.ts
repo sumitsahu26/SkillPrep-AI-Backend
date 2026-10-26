@@ -8,6 +8,7 @@ import {
   updateResume as updateResumeService,
   deleteResume as deleteResumeService,
 } from "../services/resume.service";
+import { createNotification } from "../services/notification.service";
 
 // CREATE RESUME
 
@@ -30,6 +31,18 @@ export const createResume = async (
       userId,
       req.body
     );
+
+    if(resume) {
+      await createNotification({
+        userId,
+        title: "Resume created",
+        description:
+          "Your resume has been created successfully.",
+        type: "resume",
+        link: "/resumes",
+        preferenceKey: "resumeUpdates",
+      });
+    }
 
     res.status(201).json({
       success: true,
@@ -159,6 +172,18 @@ export const updateResume = async (
       resumeId,
       req.body
     );
+
+    if(resume) {
+      await createNotification({
+        userId,
+        title: "Resume created",
+        description:
+          "Your resume has been updated successfully.",
+        type: "resume",
+        link: "/resumes",
+        preferenceKey: "resumeUpdates",
+      });
+    }
 
     res.status(200).json({
       success: true,
