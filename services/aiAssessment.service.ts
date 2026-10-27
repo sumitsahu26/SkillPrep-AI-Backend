@@ -49,9 +49,7 @@ const normalizeQuestion =
       .replace(/\s+/g, " ")
       .replace(/[?.!]+$/, "");
 
-/* =========================================================
-   CLIENT
-========================================================= */
+  //  CLIENT
 
 const getOpenAIClient =
   () => {
@@ -70,9 +68,7 @@ const getOpenAIClient =
     });
   };
 
-/* =========================================================
-   GENERATE
-========================================================= */
+  //  GENERATE
 
 export const generateAssessmentQuestions =
   async (
@@ -104,9 +100,7 @@ export const generateAssessmentQuestions =
       );
     }
 
-    /* =====================================================
-       INTERVIEW BANK CONTEXT
-    ===================================================== */
+      //  INTERVIEW BANK CONTEXT
 
     const interviewQuery:
       Record<
@@ -137,9 +131,7 @@ export const generateAssessmentQuestions =
         )
         .lean();
 
-    /* =====================================================
-       EXISTING MCQS
-    ===================================================== */
+      //  EXISTING MCQS
 
     const assessmentQuery:
       Record<
@@ -395,9 +387,7 @@ ${
       );
     }
 
-    /* =====================================================
-       FINAL DUPLICATE PROTECTION
-    ===================================================== */
+      //  FINAL DUPLICATE PROTECTION
 
     const existingSet =
       new Set(

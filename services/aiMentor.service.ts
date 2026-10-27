@@ -9,9 +9,7 @@ import {
 const MAX_HISTORY_MESSAGES =
   12;
 
-/* =========================================================
-   OPENAI
-========================================================= */
+  //  OPENAI
 
 const getOpenAIClient =
   () => {
@@ -30,9 +28,7 @@ const getOpenAIClient =
     });
   };
 
-/* =========================================================
-   SEND MESSAGE
-========================================================= */
+  //  SEND MESSAGE
 
 export const sendMentorMessage =
   async (
@@ -57,9 +53,7 @@ export const sendMentorMessage =
       );
     }
 
-    /* =====================================================
-       CHAT
-    ===================================================== */
+      //  CHAT
 
     let chat =
       await AIMentorChat.findOne(
@@ -79,18 +73,14 @@ export const sendMentorMessage =
         );
     }
 
-    /* =====================================================
-       PERSONAL CONTEXT
-    ===================================================== */
+      //  PERSONAL CONTEXT
 
     const context =
       await getMentorContext(
         userId
       );
 
-    /* =====================================================
-       PREVIOUS CHAT
-    ===================================================== */
+      //  PREVIOUS CHAT
 
     const recentMessages =
       chat.messages
@@ -107,9 +97,7 @@ export const sendMentorMessage =
           })
         );
 
-    /* =====================================================
-       MODEL
-    ===================================================== */
+      //  MODEL
 
     const model =
       process.env
@@ -203,9 +191,7 @@ ${context.roadmapSummary}
       );
     }
 
-    /* =====================================================
-       SAVE USER + ASSISTANT
-    ===================================================== */
+      //  SAVE USER + ASSISTANT
 
     chat.messages.push({
       role: "user",
@@ -256,9 +242,7 @@ ${context.roadmapSummary}
     };
   };
 
-/* =========================================================
-   HISTORY
-========================================================= */
+  //  HISTORY
 
 export const getMentorHistory =
   async (
@@ -278,9 +262,7 @@ export const getMentorHistory =
     return chat.messages;
   };
 
-/* =========================================================
-   CLEAR
-========================================================= */
+  //  CLEAR
 
 export const clearMentorHistory =
   async (

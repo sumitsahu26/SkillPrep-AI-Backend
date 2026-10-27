@@ -11,6 +11,8 @@ export interface IUser extends Document {
   authProvider: "local" | "google";
   isDeleted: boolean;
   deletedAt: Date;
+  resetPasswordToken?: string;
+  resetPasswordExpires?: Date;
 }
 
 const userSchema = new Schema<IUser>(
@@ -66,6 +68,16 @@ const userSchema = new Schema<IUser>(
     },
     
     deletedAt: {
+      type: Date,
+      default: null,
+    },
+
+    resetPasswordToken: {
+      type: String,
+      default: null,
+    },
+    
+    resetPasswordExpires: {
       type: Date,
       default: null,
     },

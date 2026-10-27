@@ -33,11 +33,9 @@ interface AIQuestionResponse {
   questions: GeneratedInterviewQuestion[];
 }
 
-/* =========================================================
-   NORMALIZE QUESTION
+  //  NORMALIZE QUESTION
 
-   Used for simple duplicate checking.
-========================================================= */
+  //  Used for simple duplicate checking.
 
 const normalizeQuestion = (
   value: string
@@ -49,9 +47,7 @@ const normalizeQuestion = (
     .replace(/[?.!]+$/, "");
 };
 
-/* =========================================================
-   GENERATE + SAVE
-========================================================= */
+  //  GENERATE + SAVE
 
 export const generateInterviewQuestions =
   async (
@@ -81,12 +77,9 @@ export const generateInterviewQuestions =
       );
     }
 
-    /* =====================================================
-       GET EXISTING QUESTIONS
+      //  GET EXISTING QUESTIONS
 
-       We send some existing questions to AI so that it can
-       try not to generate the same questions again.
-    ===================================================== */
+      //  We send some existing questions to AI so that it can try not to generate the same questions again.
 
     const existingQuestions =
       await InterviewQuestion.find({
@@ -109,9 +102,7 @@ export const generateInterviewQuestions =
         )
         .join("\n");
 
-    /* =====================================================
-       OPENAI
-    ===================================================== */
+      //  OPENAI
 
     const response =
       await openai.responses.create({
@@ -275,9 +266,7 @@ ${
       );
     }
 
-    /* =====================================================
-       LOAD ALL QUESTIONS NEEDED FOR DUPLICATE CHECKING
-    ===================================================== */
+      //  LOAD ALL QUESTIONS NEEDED FOR DUPLICATE CHECKING
 
     const databaseQuestions =
       await InterviewQuestion.find({
@@ -305,9 +294,7 @@ ${
 
     const savedQuestions = [];
 
-    /* =====================================================
-       SAVE AI QUESTIONS
-    ===================================================== */
+      //  SAVE AI QUESTIONS
 
     for (const generatedQuestion of result.questions) {
       const normalized =

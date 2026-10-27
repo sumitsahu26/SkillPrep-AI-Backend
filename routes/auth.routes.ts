@@ -11,6 +11,11 @@ import {
 
 import { authMiddleware } from "../middleware/auth.middleware";
 
+import {
+    forgotPassword,
+    resetPassword,
+} from "../controllers/auth.controller";
+
 const router = Router();
 
 router.post("/register", register);
@@ -24,5 +29,9 @@ router.post("/refresh", refreshToken);
 router.post("/logout", logout);
 
 router.get("/profile", getProfile);
+
+router.post("/forgot-password", forgotPassword);
+
+router.post("/reset-password", resetPassword);
 
 export default router;

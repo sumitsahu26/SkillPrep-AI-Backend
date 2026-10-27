@@ -21,9 +21,7 @@ import {
   saveGeneratedAssessmentQuestions,
 } from "./assessmentQuestion.service";
   
-  /* =========================================================
-     TYPES
-  ========================================================= */
+    //  TYPES
   
   export interface StartAssessmentInput {
     userId: string;
@@ -44,9 +42,7 @@ import {
     selectedAnswer: string;
   }
   
-  /* =========================================================
-     SKILL LEVEL
-  ========================================================= */
+    //  SKILL LEVEL
   
   const calculateSkillLevel =
     (
@@ -73,9 +69,7 @@ import {
       return "Beginner";
     };
   
-  /* =========================================================
-     START
-  ========================================================= */
+    //  START
   
   export const startSkillAssessment =
   async (
@@ -99,10 +93,8 @@ import {
       );
     }
 
-    /* =====================================================
-       STEP 1
-       GET QUESTIONS FROM DATABASE
-    ===================================================== */
+      //  STEP 1
+      //  GET QUESTIONS FROM DATABASE
 
     let bankQuestions =
       await getRandomAssessmentQuestions(
@@ -122,10 +114,8 @@ import {
       const initialDatabaseCount =
          bankQuestions.length;
 
-    /* =====================================================
-       STEP 2
-       FIND HOW MANY ARE MISSING
-    ===================================================== */
+      //  STEP 2
+      //  FIND HOW MANY ARE MISSING
 
     const missingCount =
     Math.max(
@@ -134,10 +124,8 @@ import {
       0
     );
 
-    /* =====================================================
-       STEP 3
-       GENERATE ONLY MISSING QUESTIONS
-    ===================================================== */
+      //  STEP 3
+      //  GENERATE ONLY MISSING QUESTIONS
 
     if (
       missingCount >
@@ -203,10 +191,8 @@ import {
       }
     }
 
-    /* =====================================================
-       STEP 4
-       FALLBACK
-    ===================================================== */
+      //  STEP 4
+      //  FALLBACK
 
     if (
       bankQuestions.length ===
@@ -223,10 +209,8 @@ import {
         questionCount
       );
 
-    /* =====================================================
-       STEP 5
-       CREATE ASSESSMENT SNAPSHOT
-    ===================================================== */
+      //  STEP 5
+      //  CREATE ASSESSMENT SNAPSHOT
     
 
     const assessment =
@@ -291,10 +275,8 @@ import {
         }
       );
 
-    /* =====================================================
-       STEP 6
-       TRACK BANK USAGE
-    ===================================================== */
+      //  STEP 6
+      //  TRACK BANK USAGE
 
     await incrementAssessmentQuestionUsage(
       finalQuestions.map(
@@ -333,9 +315,7 @@ import {
       };
   };
   
-  /* =========================================================
-     SUBMIT
-  ========================================================= */
+    //  SUBMIT
   
   export const submitSkillAssessment =
     async (
@@ -441,9 +421,9 @@ import {
             )
           : 0;
   
-      /* =====================================================
-         TOPIC PERFORMANCE
-      ===================================================== */
+
+        //  TOPIC PERFORMANCE
+// 
   
       const topicMap =
         new Map<
@@ -574,9 +554,7 @@ import {
       return assessment;
     };
   
-  /* =========================================================
-     GET USER ASSESSMENTS
-  ========================================================= */
+    //  GET USER ASSESSMENTS
   
   export const getUserSkillAssessments =
     async (
@@ -605,9 +583,7 @@ import {
         );
     };
   
-  /* =========================================================
-     GET ONE
-  ========================================================= */
+    //  GET ONE
   
   export const getSkillAssessmentById =
     async (
@@ -643,9 +619,7 @@ import {
       return assessment;
     };
   
-  /* =========================================================
-     DELETE
-  ========================================================= */
+    //  DELETE
   
   export const deleteSkillAssessment =
     async (

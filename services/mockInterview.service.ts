@@ -6,6 +6,9 @@ import MockInterview, {
 } from "../models/mockInterview.model";
 import InterviewQuestion from "../models/interview.model";
 import { createNotification } from "./notification.service";
+import { sendEmail } from "./email.service";
+import { getMockInterviewResultEmailTemplate } from "../templates/emails/mockInterviewResultEmail";
+import User from "../models/user.model";
 
 
 import {
@@ -816,6 +819,32 @@ export const completeMockInterview =
             interview.questions.length;
 
         await interview.save();
+
+        try {
+            const user = await User.findById(userId).select("name email");
+
+            if (user?.email) {
+                const technology =
+                    interview.technology || "Mock Interview";
+
+                await sendEmail({
+                    to: user.email,
+                    subject: `Your ${technology} Mock Interview Results`,
+                    html: getMockInterviewResultEmailTemplate({
+                        userName: user.name,
+                        technology,
+                        score: percentage,
+                        totalQuestions: interview.questions.length,
+                        correctAnswers: answeredQuestions.length,
+                    }),
+                });
+            }
+        } catch (emailError) {
+            console.error(
+                "Mock interview result email failed:",
+                emailError
+            );
+        }
 
         return interview;
     };

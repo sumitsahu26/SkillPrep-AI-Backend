@@ -20,9 +20,7 @@ import {
     generateCareerAnalysis,
   } from "./aiCareerMonitor.service";
   
-  /* =========================================================
-     TYPES
-  ========================================================= */
+    //  TYPES
   
   export interface CareerMetrics {
     resume: number;
@@ -55,9 +53,7 @@ import {
       string;
   }
   
-  /* =========================================================
-     HELPERS
-  ========================================================= */
+    //  HELPERS
   
   const clamp =
     (
@@ -97,9 +93,7 @@ import {
       );
     };
   
-  /* =========================================================
-     RESUME SCORE
-  ========================================================= */
+    //  RESUME SCORE
   
   const calculateResumeScore =
     async (
@@ -212,9 +206,7 @@ import {
       );
     };
   
-  /* =========================================================
-     INTERVIEW PREPARATION
-  ========================================================= */
+    //  INTERVIEW PREPARATION
   
   const calculateInterviewPreparation =
     async (
@@ -256,9 +248,7 @@ import {
       );
     };
   
-  /* =========================================================
-     MOCK INTERVIEW SCORE
-  ========================================================= */
+    //  MOCK INTERVIEW SCORE
   
   const calculateMockInterviewScore =
     async (
@@ -379,9 +369,7 @@ import {
       );
     };
   
-  /* =========================================================
-     SKILL ASSESSMENT
-  ========================================================= */
+    //  SKILL ASSESSMENT
   
   const calculateSkillAssessmentScore =
     async (
@@ -422,9 +410,7 @@ import {
       );
     };
   
-  /* =========================================================
-     ROADMAP
-  ========================================================= */
+    //  ROADMAP
   
   const calculateRoadmapScore =
     async (
@@ -460,9 +446,7 @@ import {
       );
     };
   
-  /* =========================================================
-     SKILL ANALYSIS
-  ========================================================= */
+    //  SKILL ANALYSIS
   
   const getSkillAnalysis =
     async (
@@ -579,9 +563,7 @@ import {
       };
     };
   
-  /* =========================================================
-     TARGET ROLE
-  ========================================================= */
+    //  TARGET ROLE
   
   const getTargetRole =
     async (
@@ -626,9 +608,7 @@ import {
       );
     };
   
-  /* =========================================================
-     RECENT SUMMARIES
-  ========================================================= */
+    //  RECENT SUMMARIES
   
   const getRecentAssessmentSummary =
     async (
@@ -722,9 +702,7 @@ import {
       )}/10.`;
     };
   
-  /* =========================================================
-     CURRENT METRICS
-  ========================================================= */
+    //  CURRENT METRICS
   
   export const getCurrentCareerMetrics =
     async (
@@ -844,9 +822,7 @@ import {
       };
     };
   
-  /* =========================================================
-     AI ANALYSIS + SAVE SNAPSHOT
-  ========================================================= */
+    //  AI ANALYSIS + SAVE SNAPSHOT
   
   export const analyzeCareer =
     async (
@@ -945,9 +921,7 @@ import {
       return snapshot;
     };
   
-  /* =========================================================
-     FALLBACK RECOMMENDATIONS
-  ========================================================= */
+    //  FALLBACK RECOMMENDATIONS
   
   const createFallbackRecommendations =
     (
@@ -1058,9 +1032,7 @@ import {
         );
     };
   
-  /* =========================================================
-     HISTORY
-  ========================================================= */
+    //  HISTORY
   
   export const getCareerHistory =
     async (
@@ -1075,9 +1047,7 @@ import {
         .limit(30);
     };
   
-  /* =========================================================
-     HISTORY ITEM
-  ========================================================= */
+    //  HISTORY ITEM
   
   export const getCareerSnapshot =
     async (
@@ -1111,9 +1081,7 @@ import {
       return snapshot;
     };
   
-  /* =========================================================
-     DELETE
-  ========================================================= */
+    //  DELETE
   
   export const deleteCareerSnapshot =
     async (

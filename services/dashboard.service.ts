@@ -5,9 +5,7 @@ import SkillAssessment from "../models/skillAssessment.model";
 import MockInterview from "../models/mockInterview.model";
 import Roadmap from "../models/roadmap.model";
 
-/* =========================================================
-   HELPERS
-========================================================= */
+  //  HELPERS
 
 const clamp = (value: number) =>
   Math.min(
@@ -28,9 +26,7 @@ const average = (values: number[]) => {
   );
 };
 
-/* =========================================================
-   DASHBOARD
-========================================================= */
+  //  DASHBOARD
 
 export const getDashboardData =
   async (userId: string) => {
@@ -89,9 +85,7 @@ export const getDashboardData =
         .lean(),
     ]);
 
-    /* =====================================================
-       INTERVIEW
-    ===================================================== */
+      //  INTERVIEW
 
     const completedQuestions =
       interviewProgress
@@ -112,9 +106,7 @@ export const getDashboardData =
           )
         : 0;
 
-    /* =====================================================
-       ASSESSMENTS
-    ===================================================== */
+      //  ASSESSMENTS
 
     const assessmentAverage =
       assessments.length
@@ -145,9 +137,7 @@ export const getDashboardData =
         })
       );
 
-    /* =====================================================
-       MOCK INTERVIEWS
-    ===================================================== */
+      //  MOCK INTERVIEWS
 
     const getMockScore = (
       mock: any
@@ -199,9 +189,7 @@ export const getDashboardData =
           )
         : 0;
 
-    /* =====================================================
-       ROADMAP
-    ===================================================== */
+      //  ROADMAP
 
     const activeRoadmap =
       roadmaps[0] || null;
@@ -215,9 +203,7 @@ export const getDashboardData =
           )
         : 0;
 
-    /* =====================================================
-       CAREER READINESS
-    ===================================================== */
+      //  CAREER READINESS
 
     const resumeScore =
       resumes.length > 0
@@ -234,9 +220,7 @@ export const getDashboardData =
           roadmapProgress * 0.15
       );
 
-    /* =====================================================
-       RECENT RESUMES
-    ===================================================== */
+      //  RECENT RESUMES
 
     const recentResumes =
       resumes.slice(0, 3).map(
@@ -260,9 +244,7 @@ export const getDashboardData =
         })
       );
 
-    /* =====================================================
-       RECENT ACTIVITY
-    ===================================================== */
+      //  RECENT ACTIVITY
 
     const recentActivity: {
       id: string;

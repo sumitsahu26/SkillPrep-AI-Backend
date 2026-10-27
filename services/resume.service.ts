@@ -51,11 +51,7 @@ interface ResumeData {
   template?: string;
 }
 
-/*
-|--------------------------------------------------------------------------
-| CREATE RESUME
-|--------------------------------------------------------------------------
-*/
+// | CREATE RESUME
 
 export const createResume = async (
   userId: string,
@@ -69,11 +65,7 @@ export const createResume = async (
   return resume;
 };
 
-/*
-|--------------------------------------------------------------------------
-| GET ALL USER RESUMES
-|--------------------------------------------------------------------------
-*/
+// | GET ALL USER RESUMES
 
 export const getAllResumes = async (userId: string) => {
   const resumes = await Resume.find({
@@ -85,11 +77,7 @@ export const getAllResumes = async (userId: string) => {
   return resumes;
 };
 
-/*
-|--------------------------------------------------------------------------
-| GET SINGLE RESUME
-|--------------------------------------------------------------------------
-*/
+// | GET SINGLE RESUME
 
 export const getResumeById = async (
   userId: string,
@@ -111,11 +99,7 @@ export const getResumeById = async (
   return resume;
 };
 
-/*
-|--------------------------------------------------------------------------
-| UPDATE RESUME
-|--------------------------------------------------------------------------
-*/
+// | UPDATE RESUME
 
 export const updateResume = async (
   userId: string,
@@ -147,11 +131,7 @@ export const updateResume = async (
   return resume;
 };
 
-/*
-|--------------------------------------------------------------------------
-| DELETE RESUME
-|--------------------------------------------------------------------------
-*/
+// | DELETE RESUME
 
 export const deleteResume = async (
   userId: string,

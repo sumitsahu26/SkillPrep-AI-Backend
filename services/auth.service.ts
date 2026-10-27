@@ -1,10 +1,15 @@
 import bcrypt from "bcryptjs";
+import crypto from "crypto";
 import jwt from "jsonwebtoken";
 import User from "../models/user.model";
 import { OAuth2Client } from "google-auth-library";
 import fs from "fs";
 import path from "path";
 import { createNotification } from "./notification.service";
+import { sendEmail } from "./email.service";
+import { getPasswordResetEmailTemplate } from "../templates/emails/passwordResetEmail";
+import { getPasswordChangedEmailTemplate } from "../templates/emails/passwordChangedEmail";
+import { getWelcomeEmailTemplate } from "../templates/emails/welcomeEmail";
 
 interface RegisterData {
   name: string;
@@ -62,23 +67,31 @@ const generateRefreshToken = (
 export const registerUser = async (
   data: RegisterData
 ) => {
-  const { name, email, password } = data;
+  const name = data.name.trim();
+  const email = data.email.toLowerCase().trim();
+  const password = data.password;
 
-  const existingUser = await User.findOne({ email });
+  const existingUser = await User.findOne({
+    email,
+  });
 
   if (existingUser) {
     throw new Error("User already exists");
   }
 
-  const hashedPassword = await bcrypt.hash(password, 10);
+  const hashedPassword = await bcrypt.hash(
+    password,
+    10
+  );
 
   const user = await User.create({
     name,
     email,
     password: hashedPassword,
+    authProvider: "local",
   });
 
-  if(user) {
+  if (user) {
     await createNotification({
       userId: user._id.toString(),
       title: "Welcome to SkillPrep AI",
@@ -86,6 +99,12 @@ export const registerUser = async (
         "Start building your resume and preparing for your next interview.",
       type: "system",
       link: "/dashboard",
+    });
+
+    await sendEmail({
+      to: user.email,
+      subject: "Welcome to SkillPrep AI",
+      html: getWelcomeEmailTemplate(user.name),
     });
   }
 
@@ -468,4 +487,140 @@ export const getUserProfile = async (
   }
 
   return user;
+};
+
+export const forgotPasswordUser = async (email: string) => {
+  const normalizedEmail = email.trim().toLowerCase();
+
+  const user = await User.findOne({
+    email: normalizedEmail,
+    isDeleted: { $ne: true },
+  });
+
+  // Do not reveal whether an email exists.
+  if (!user) {
+    return;
+  }
+  
+  if (!user.password) {
+    return;
+  }
+
+  const resetToken = crypto.randomBytes(32).toString("hex");
+
+  const hashedToken = crypto
+    .createHash("sha256")
+    .update(resetToken)
+    .digest("hex");
+
+  user.resetPasswordToken = hashedToken;
+
+  user.resetPasswordExpires = new Date(
+    Date.now() + 15 * 60 * 1000
+  );
+
+  await user.save();
+
+  const frontendUrl =
+    process.env.FRONTEND_URL || "http://localhost:3000";
+
+  const resetUrl = `${frontendUrl}/reset-password?token=${resetToken}`;
+
+  try {
+    await sendEmail({
+      to: user.email,
+      subject: "Reset your SkillPrep AI password",
+      html: getPasswordResetEmailTemplate(user.name, resetUrl),
+    });
+  } catch (error) {
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpires = undefined;
+
+    await user.save();
+
+    throw new Error("Failed to send reset password email");
+  }
+};
+
+export const resetPasswordUser = async (
+  token: string,
+  newPassword: string
+) => {
+  if (!token) {
+    throw new Error("Reset token is required");
+  }
+
+  if (!newPassword) {
+    throw new Error("New password is required");
+  }
+
+  if (newPassword.length < 6) {
+    throw new Error(
+      "Password must be at least 6 characters"
+    );
+  }
+
+  // Hash received token so we can compare it
+  // with the hashed token stored in MongoDB
+  const hashedToken = crypto
+    .createHash("sha256")
+    .update(token)
+    .digest("hex");
+
+  const user = await User.findOne({
+    resetPasswordToken: hashedToken,
+    resetPasswordExpires: {
+      $gt: new Date(),
+    },
+    isDeleted: {
+      $ne: true,
+    },
+  });
+
+  if (!user) {
+    throw new Error(
+      "Reset password link is invalid or has expired"
+    );
+  }
+
+  const hashedPassword = await bcrypt.hash(
+    newPassword,
+    10
+  );
+
+  user.password = hashedPassword;
+
+  // Reset Google-only account behavior if needed.
+  // User can now also login using email/password.
+  if (!user.authProvider) {
+    user.authProvider = "local";
+  }
+
+  user.resetPasswordToken = undefined;
+  user.resetPasswordExpires = undefined;
+
+  // Logout existing sessions after password reset
+  user.refreshToken = undefined;
+
+  await user.save();
+
+  // Send security email.
+  // Password reset should still succeed even if
+  // this email fails.
+  try {
+    await sendEmail({
+      to: user.email,
+      subject: "Your SkillPrep AI password was changed",
+      html: getPasswordChangedEmailTemplate(user.name),
+    });
+  } catch (error) {
+    console.error(
+      "Password changed email failed:",
+      error
+    );
+  }
+
+  return {
+    message: "Password reset successfully",
+  };
 };

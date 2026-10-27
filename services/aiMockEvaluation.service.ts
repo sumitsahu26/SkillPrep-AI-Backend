@@ -14,9 +14,7 @@ const openai =
     apiKey,
   });
 
-/* =========================================================
-   TYPES
-========================================================= */
+  //  TYPES
 
 export interface EvaluateAnswerInput {
   technology: string;
@@ -49,9 +47,7 @@ export interface AnswerEvaluation {
   betterAnswer: string;
 }
 
-/* =========================================================
-   EVALUATE ANSWER
-========================================================= */
+  //  EVALUATE ANSWER
 
 export const evaluateInterviewAnswer =
   async (

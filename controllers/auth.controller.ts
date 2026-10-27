@@ -6,6 +6,8 @@ import {
   refreshAccessToken,
   logoutUser,
   googleLoginUser,
+  resetPasswordUser,
+  forgotPasswordUser,
 } from "../services/auth.service";
 import { AuthRequest } from "../middleware/auth.middleware";
 
@@ -298,6 +300,106 @@ export const logout = async (
     res.status(500).json({
       success: false,
       message: "Internal server error",
+    });
+  }
+};
+
+export const forgotPassword = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const { email } = req.body;
+
+    if (
+      !email ||
+      typeof email !== "string" ||
+      !email.trim()
+    ) {
+      res.status(400).json({
+        success: false,
+        message: "Email is required",
+      });
+      return;
+    }
+
+    await forgotPasswordUser(email);
+
+    res.status(200).json({
+      success: true,
+      message:
+        "If an account exists with this email, a password reset link has been sent.",
+    });
+  } catch (error) {
+    console.error("Forgot password error:", error);
+
+    res.status(500).json({
+      success: false,
+      message:
+        error instanceof Error
+          ? error.message
+          : "Failed to process password reset request",
+    });
+  }
+};
+
+export const resetPassword = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const { token, password } = req.body;
+
+    if (
+      !token ||
+      typeof token !== "string"
+    ) {
+      res.status(400).json({
+        success: false,
+        message: "Reset token is required",
+      });
+      return;
+    }
+
+    if (
+      !password ||
+      typeof password !== "string"
+    ) {
+      res.status(400).json({
+        success: false,
+        message: "Password is required",
+      });
+      return;
+    }
+
+    if (password.length < 6) {
+      res.status(400).json({
+        success: false,
+        message:
+          "Password must be at least 6 characters",
+      });
+      return;
+    }
+
+    await resetPasswordUser(
+      token,
+      password
+    );
+
+    res.status(200).json({
+      success: true,
+      message:
+        "Password reset successfully. Please login with your new password.",
+    });
+  } catch (error) {
+    console.error("Reset password error:", error);
+
+    res.status(400).json({
+      success: false,
+      message:
+        error instanceof Error
+          ? error.message
+          : "Failed to reset password",
     });
   }
 };

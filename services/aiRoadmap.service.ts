@@ -14,9 +14,7 @@ const openai =
     apiKey,
   });
 
-/* =========================================================
-   TYPES
-========================================================= */
+  //  TYPES
 
 export interface GenerateRoadmapInput {
   targetRole: string;
@@ -69,9 +67,7 @@ export interface AIRoadmapResult {
   steps: AIRoadmapStep[];
 }
 
-/* =========================================================
-   GENERATE
-========================================================= */
+  //  GENERATE
 
 export const generateAIRoadmap =
   async (

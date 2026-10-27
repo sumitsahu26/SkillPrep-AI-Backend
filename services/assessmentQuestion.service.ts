@@ -19,9 +19,7 @@ import {
         .replace(/[?.!]+$/, "");
     };
   
-  /* =========================================================
-     RANDOM QUESTIONS
-  ========================================================= */
+    //  RANDOM QUESTIONS
   
   export const getRandomAssessmentQuestions =
     async ({
@@ -102,9 +100,7 @@ import {
       );
     };
   
-  /* =========================================================
-     GET EXISTING QUESTION TEXT
-  ========================================================= */
+    //  GET EXISTING QUESTION TEXT
   
   export const getExistingAssessmentQuestionTexts =
     async (
@@ -140,9 +136,7 @@ import {
       return questions;
     };
   
-  /* =========================================================
-     SAVE GENERATED QUESTIONS
-  ========================================================= */
+    //  SAVE GENERATED QUESTIONS
   
   export const saveGeneratedAssessmentQuestions =
     async (
@@ -287,9 +281,7 @@ import {
       return saved;
     };
   
-  /* =========================================================
-     INCREMENT USAGE
-  ========================================================= */
+    //  INCREMENT USAGE
   
   export const incrementAssessmentQuestionUsage =
     async (

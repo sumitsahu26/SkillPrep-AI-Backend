@@ -10,9 +10,7 @@ import MockInterview from "../models/mockInterview.model";
 
 import Roadmap from "../models/roadmap.model";
 
-/* =========================================================
-   TYPE
-========================================================= */
+  //  TYPE
 
 export interface MentorContext {
   targetRole: string;
@@ -28,9 +26,7 @@ export interface MentorContext {
   roadmapSummary: string;
 }
 
-/* =========================================================
-   CONTEXT
-========================================================= */
+  //  CONTEXT
 
 export const getMentorContext =
   async (
@@ -102,9 +98,7 @@ export const getMentorContext =
           .lean(),
       ]);
 
-    /* =====================================================
-       RESUME
-    ===================================================== */
+      //  RESUME
 
     const resumeData =
       resume as any;
@@ -176,9 +170,7 @@ Projects: ${
 `
         : "No resume has been created yet.";
 
-    /* =====================================================
-       INTERVIEW PREPARATION
-    ===================================================== */
+      //  INTERVIEW PREPARATION
 
     const completedQuestions =
       interviewProgress
@@ -207,9 +199,7 @@ Interview preparation progress: ${interviewPercentage}%
 Bookmarked questions: ${bookmarkedQuestions}
 `;
 
-    /* =====================================================
-       ASSESSMENTS
-    ===================================================== */
+      //  ASSESSMENTS
 
     const assessmentSummary =
       assessments.length
@@ -238,9 +228,7 @@ Bookmarked questions: ${bookmarkedQuestions}
             .join("\n")
         : "No completed skill assessments.";
 
-    /* =====================================================
-       MOCK INTERVIEWS
-    ===================================================== */
+      //  MOCK INTERVIEWS
 
     const mockSummary =
       mockInterviews.length
@@ -302,9 +290,7 @@ Bookmarked questions: ${bookmarkedQuestions}
             .join("\n")
         : "No completed mock interviews.";
 
-    /* =====================================================
-       ROADMAP
-    ===================================================== */
+      //  ROADMAP
 
     const roadmapSummary =
       roadmap
@@ -338,9 +324,7 @@ Target skills: ${
 `
         : "No learning roadmap created yet.";
 
-    /* =====================================================
-       TARGET ROLE
-    ===================================================== */
+      //  TARGET ROLE
 
     const targetRole =
       roadmap?.targetRole ||

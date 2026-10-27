@@ -7,9 +7,7 @@ import {
   generateAIRoadmap,
 } from "./aiRoadmap.service";
 
-/* =========================================================
-   TYPES
-========================================================= */
+  //  TYPES
 
 export interface CreateRoadmapInput {
   userId: string;
@@ -25,9 +23,7 @@ export interface CreateRoadmapInput {
   targetSkills?: string[];
 }
 
-/* =========================================================
-   GENERATE ROADMAP
-========================================================= */
+  //  GENERATE ROADMAP
 
 export const createRoadmap =
   async (
@@ -138,9 +134,7 @@ export const createRoadmap =
     return roadmap;
   };
 
-/* =========================================================
-   GET USER ROADMAPS
-========================================================= */
+  //  GET USER ROADMAPS
 
 export const getUserRoadmaps =
   async (
@@ -167,9 +161,7 @@ export const getUserRoadmaps =
       );
   };
 
-/* =========================================================
-   GET ONE ROADMAP
-========================================================= */
+  //  GET ONE ROADMAP
 
 export const getRoadmapById =
   async (
@@ -201,9 +193,7 @@ export const getRoadmapById =
     return roadmap;
   };
 
-/* =========================================================
-   TOGGLE TOPIC
-========================================================= */
+  //  TOGGLE TOPIC
 
 export const toggleRoadmapTopic =
   async (
@@ -344,9 +334,7 @@ export const toggleRoadmapTopic =
     return roadmap;
   };
 
-/* =========================================================
-   DELETE ROADMAP
-========================================================= */
+  //  DELETE ROADMAP
 
 export const deleteRoadmap =
   async (
