@@ -58,8 +58,8 @@ app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/notifications", notificationRoutes);
 
 
-const PORT = process.env.PORT || 5002;
+const PORT = Number(process.env.PORT) || 5002;
 
-app.listen(PORT, () => {
+app.listen(PORT, "0.0.0.0", () => {
   console.log(`Server running on port ${PORT}`);
-}); 
+});
