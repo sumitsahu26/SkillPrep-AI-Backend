@@ -45,7 +45,9 @@ export const getProfile = async (
         userId: {
           name: result.user.name,
           email: result.user.email,
-          profileImage: `${profileUrl + result.user.profileImage}` || "",
+          profileImage: result.user.profileImage
+            ? `${profileUrl}${result.user.profileImage}`
+            : "",
         },
       },
     });
@@ -79,7 +81,7 @@ export const updateProfile = async (
       req.body
     );
 
-    if(profile) {
+    if (profile) {
       await createNotification({
         userId,
         title: "Profile updates",
@@ -122,7 +124,7 @@ export const updateUser = async (
       userId,
       req.body
     );
-    
+
     res.status(200).json({
       success: true,
       message: "User name updated successfully",
