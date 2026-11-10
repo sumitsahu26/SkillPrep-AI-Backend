@@ -95,6 +95,7 @@ export const login = async (
       success: true,
       message: "Login successful",
       accessToken: result.accessToken,
+      refreshToken: result.refreshToken,
       user: result.user,
     });
   } catch (error) {
@@ -174,6 +175,7 @@ export const googleLogin = async (
       success: true,
       message: "Google login successful",
       accessToken: result.accessToken,
+      refreshToken: result.refreshToken,
       user: result.user,
     });
   } catch (error) {
@@ -240,7 +242,7 @@ export const refreshToken = async (
   res: Response
 ): Promise<void> => {
   try {
-    const refreshToken = req.cookies.refreshToken;
+    const refreshToken = req.body?.refreshToken || req.cookies?.refreshToken;
 
     if (!refreshToken) {
       res.status(401).json({
