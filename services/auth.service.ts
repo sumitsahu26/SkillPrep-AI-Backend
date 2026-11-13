@@ -489,7 +489,7 @@ export const getUserProfile = async (
   return user;
 };
 
-export const forgotPasswordUser = async (email: string) => {
+export const forgotPasswordUser = async (email: string, source: string) => {
   const normalizedEmail = email.trim().toLowerCase();
 
   const user = await User.findOne({
@@ -524,7 +524,9 @@ export const forgotPasswordUser = async (email: string) => {
   const frontendUrl =
     process.env.FRONTEND_URL || "http://localhost:3000";
 
-  const resetUrl = `${frontendUrl}/reset-password?token=${resetToken}`;
+  const safeSource = source === "app" ? "app" : "web";
+
+  const resetUrl = `${frontendUrl}/reset-password?token=${resetToken}&source=${safeSource}`;
 
   try {
     await sendEmail({

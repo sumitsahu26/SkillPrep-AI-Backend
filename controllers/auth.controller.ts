@@ -277,7 +277,7 @@ export const logout = async (
   res: Response
 ): Promise<void> => {
   try {
-    const refreshToken = req.cookies.refreshToken;
+    const refreshToken = req.body?.refreshToken || req.cookies?.refreshToken;
 
     if (refreshToken) {
       await logoutUser(refreshToken);
@@ -311,7 +311,7 @@ export const forgotPassword = async (
   res: Response
 ): Promise<void> => {
   try {
-    const { email } = req.body;
+    const { email, source } = req.body;
 
     if (
       !email ||
@@ -325,7 +325,7 @@ export const forgotPassword = async (
       return;
     }
 
-    await forgotPasswordUser(email);
+    await forgotPasswordUser(email, source);
 
     res.status(200).json({
       success: true,
